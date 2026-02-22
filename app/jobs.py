@@ -48,6 +48,19 @@ def get_job(job_id: str) -> dict[str, Any] | None:
         return dict(job)
 
 
+def count_active_jobs() -> int:
+    with _lock:
+        return sum(1 for job in _jobs.values() if job.get("status") in {"queued", "running"})
+
+
+def most_recent_job_created_at() -> float | None:
+    with _lock:
+        created = [float(job.get("created_at", 0.0) or 0.0) for job in _jobs.values()]
+    if not created:
+        return None
+    return max(created)
+
+
 def _update_job(job_id: str, **fields: Any) -> None:
     with _lock:
         job = _jobs.get(job_id)
@@ -88,6 +101,8 @@ def _run_ingest_job(job_id: str) -> None:
             crawl=params.get("crawl", True),
             chunk_days=params.get("chunk_days", 31),
             store_raw=params.get("store_raw", True),
+            use_recent_cache=params.get("use_recent_cache", True),
+            cache_ttl_minutes=params.get("cache_ttl_minutes", 60),
             progress_callback=progress_callback,
         )
         _update_job(job_id, status="completed", result=result)

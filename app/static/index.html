@@ -146,6 +146,103 @@
       font-size: .85rem;
       color: var(--muted);
     }
+    .coverage-panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .coverage-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .coverage-kpi {
+      border: 1px solid #e4dfd3;
+      background: white;
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+    .coverage-kpi .k { font-size: .7rem; color: var(--muted); }
+    .coverage-kpi .v { font-size: .9rem; font-weight: 700; }
+    .range-cache-status {
+      border: 1px solid #e4dfd3;
+      background: white;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: .82rem;
+      color: #3e4642;
+    }
+    .range-list { display: grid; gap: 5px; max-height: 120px; overflow-y: auto; }
+    .range-row {
+      border: 1px solid #eee8da;
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: .78rem;
+    }
+    .range-row button {
+      background: transparent;
+      color: #0b4d5f;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+    .browse-panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .browse-section {
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #faf8f2;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .browse-section-title {
+      font-size: .78rem;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+    .browse-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .browse-actions button { padding: 8px 10px; font-size: .85rem; }
+    .browse-list { display: grid; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .browse-row {
+      border: 1px solid #e8e2d6;
+      border-radius: 8px;
+      background: #fffdf7;
+      padding: 7px 8px;
+      font-size: .8rem;
+    }
+    .browse-row.active {
+      border-color: #86c7d8;
+      background: #eef8fb;
+      box-shadow: inset 0 0 0 1px #c7e7f0;
+    }
+    .browse-row button {
+      background: transparent;
+      border: 0;
+      color: #0b4d5f;
+      padding: 0;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+    }
+    .browse-row button:hover { text-decoration: underline; }
 
     .results { margin-top: 18px; display: grid; gap: 12px; }
     .meeting {
@@ -358,6 +455,7 @@
       .grid { grid-template-columns: 1fr 1fr; }
       .col-2, .col-1 { grid-column: span 1; }
       .summary { grid-template-columns: 1fr; }
+      .coverage-grid { grid-template-columns: 1fr 1fr; }
       .workspace { grid-template-columns: 1fr; height: auto; }
       .main-col, .side-col { overflow: visible; }
       .sticky { position: static; }
@@ -393,6 +491,11 @@
             <input id="chunkDays" name="chunkDays" type="number" min="1" max="90" value="31" />
             <div class="hint">Days per CivicWeb crawl window. Smaller = more API calls, safer for long ranges.</div>
           </div>
+          <div class="col-1">
+            <label for="cacheTtlMinutes">Cache TTL (minutes)</label>
+            <input id="cacheTtlMinutes" name="cacheTtlMinutes" type="number" min="0" max="1440" value="60" />
+            <div class="hint">Reuse recent meeting discovery lists within this time window.</div>
+          </div>
           <div class="col-2">
             <label for="topic">Topic</label>
             <select id="topic" name="topic">
@@ -414,6 +517,7 @@
         <div class="checks">
           <label><input id="crawl" type="checkbox" checked /> Crawl Historic Windows</label>
           <label><input id="storeRaw" type="checkbox" checked /> Store Raw Source Payloads</label>
+          <label><input id="useRecentCache" type="checkbox" checked /> Reuse Recent Discovery Cache</label>
         </div>
 
         <div>
@@ -430,6 +534,27 @@
         <div class="kpi"><div class="k">Discovered</div><div class="v" id="kDiscovered">0</div></div>
         <div class="kpi"><div class="k">Ingested</div><div class="v" id="kIngested">0</div></div>
         <div class="kpi"><div class="k">Agenda Items Returned</div><div class="v" id="kItems">0</div></div>
+      </div>
+      <div id="coveragePanel" class="coverage-panel">
+        <div class="entity-title">Coverage & Discovery Cache</div>
+        <div id="rangeCacheStatus" class="range-cache-status">Checking cache status...</div>
+        <div id="coverageStats" class="coverage-grid"></div>
+        <div id="recentRanges" class="range-list"></div>
+      </div>
+      <div id="existingDataPanel" class="browse-panel">
+        <div class="entity-title">Explore Existing Data</div>
+        <div class="browse-actions">
+          <button id="browseStoredMeetingsBtn" type="button">Browse Stored Meetings</button>
+          <button id="refreshTopicBrowserBtn" type="button">Refresh Topic Browser</button>
+        </div>
+        <div class="browse-section">
+          <div class="browse-section-title">Topics</div>
+          <div id="topicBrowserList" class="browse-list"></div>
+        </div>
+        <div class="browse-section">
+          <div class="browse-section-title">Stored Meetings</div>
+          <div id="storedMeetingsList" class="browse-list"></div>
+        </div>
       </div>
     </section>
         <div id="related" class="related" hidden></div>
@@ -489,6 +614,14 @@
     const tabSearchEl = document.getElementById("tabSearch");
     const tabTimelineEl = document.getElementById("tabTimeline");
     const tabMapEl = document.getElementById("tabMap");
+    const rangeCacheStatusEl = document.getElementById("rangeCacheStatus");
+    const coverageStatsEl = document.getElementById("coverageStats");
+    const recentRangesEl = document.getElementById("recentRanges");
+    const browseStoredMeetingsBtn = document.getElementById("browseStoredMeetingsBtn");
+    const refreshTopicBrowserBtn = document.getElementById("refreshTopicBrowserBtn");
+    const storedMeetingsListEl = document.getElementById("storedMeetingsList");
+    const topicBrowserListEl = document.getElementById("topicBrowserList");
+    const mainColEl = document.querySelector(".main-col");
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
@@ -500,6 +633,8 @@
     let lastIngestSummary = null;
     let activeSidebarView = "search";
     let suggestTimer = null;
+    let coverageTimer = null;
+    let selectedStoredMeetingId = null;
 
     function setSidebarView(view) {
       activeSidebarView = view;
@@ -532,6 +667,68 @@
       }
       const pct = Math.max(0, Math.min(100, Math.round((processed / discovered) * 100)));
       progressBar.style.width = `${pct}%`;
+    }
+
+    function renderCoverageStats(payload) {
+      if (!payload) {
+        coverageStatsEl.innerHTML = "";
+        recentRangesEl.innerHTML = "";
+        return;
+      }
+      const cards = [
+        ["Meetings", payload.meeting_count || 0],
+        ["Agenda Items", payload.agenda_item_count || 0],
+        ["Documents", payload.document_count || 0],
+        ["Minutes", payload.minutes_metadata_count || 0],
+        ["Entities", payload.entity_count || 0],
+      ];
+      coverageStatsEl.innerHTML = cards
+        .map(([k, v]) => `<div class="coverage-kpi"><div class="k">${k}</div><div class="v">${v}</div></div>`)
+        .join("");
+
+      const rows = payload.recent_discovery_ranges || [];
+      if (!rows.length) {
+        recentRangesEl.innerHTML = `<div class="range-row">No cached discovery ranges yet. Run ingest to build coverage history.</div>`;
+        return;
+      }
+      recentRangesEl.innerHTML = rows.map((r) => (
+        `<div class="range-row"><button type="button" data-apply-range="1" data-range-from="${r.from_date}" data-range-to="${r.to_date}" data-range-chunk="${r.chunk_days}" data-range-crawl="${String(Boolean(r.crawl))}">${r.from_date} to ${r.to_date}</button><div class="meta">${r.discovered_count} meetings • ${r.crawl ? "crawl" : "single call"} • chunk ${r.chunk_days}</div><div class="meta">fetched: ${r.last_fetched_at || "unknown"}</div></div>`
+      )).join("");
+    }
+
+    function renderRangeCacheStatus(payload) {
+      if (!payload) {
+        rangeCacheStatusEl.textContent = "Cache status unavailable.";
+        return;
+      }
+      if (!payload.has_cache) {
+        rangeCacheStatusEl.innerHTML = `No cached discovery list for this date range and crawl mode. The next run will query CivicWeb and save coverage.`;
+        return;
+      }
+      const freshness = payload.cache_fresh
+        ? "<span class='runtime-ok'>fresh cache available</span>"
+        : "<span class='runtime-warn'>cache expired</span>";
+      rangeCacheStatusEl.innerHTML = `${freshness} • discovered meetings: ${payload.discovered_count || 0}<br><span class="meta">last fetched: ${payload.last_fetched_at || "unknown"} • ttl: ${payload.cache_ttl_minutes} min</span>`;
+    }
+
+    function renderStoredMeetingsBrowse(rows) {
+      if (!rows || !rows.length) {
+        storedMeetingsListEl.innerHTML = `<div class="browse-row">No stored meetings match the current filters.</div>`;
+        return;
+      }
+      storedMeetingsListEl.innerHTML = rows.map((m) => (
+        `<div class="browse-row ${selectedStoredMeetingId === Number(m.meeting_id) ? "active" : ""}"><button type="button" data-open-meeting-id="${m.meeting_id}">Meeting ${m.meeting_id}${m.name ? ` • ${m.name}` : ""}</button><div class="meta">${m.location || "location unknown"} ${m.time ? `• ${m.time}` : ""}</div><div class="meta">agenda: ${m.agenda_item_count} • docs: ${m.document_count} • entities: ${m.entity_count}${m.matched_topic_count ? ` • topic matches: ${m.matched_topic_count}` : ""}</div></div>`
+      )).join("");
+    }
+
+    function renderTopicBrowser(rows) {
+      if (!rows || !rows.length) {
+        topicBrowserListEl.innerHTML = `<div class="browse-row">No topics available from stored agenda data yet.</div>`;
+        return;
+      }
+      topicBrowserListEl.innerHTML = rows.map((t) => (
+        `<div class="browse-row"><button type="button" data-topic-browser="${t.topic}">${t.topic}</button><div class="meta">agenda items: ${t.agenda_item_count} • meetings: ${t.meeting_count}${(t.recent_meeting_ids || []).length ? ` • recent: ${(t.recent_meeting_ids || []).join(", ")}` : ""}</div></div>`
+      )).join("");
     }
 
     function renderSignals(signals) {
@@ -670,8 +867,9 @@
         setProgress(processed, discovered);
 
         const currentMeeting = progress.current_meeting_id ? ` (meeting ${progress.current_meeting_id})` : "";
+        const discoveryBits = progress.discovery_source ? ` • discovery: ${progress.discovery_source}` : "";
         if (job.status === "running" || job.status === "queued") {
-          setStatus(`Ingest progress: ${processed}/${discovered || "?"}${currentMeeting}`);
+          setStatus(`Ingest progress: ${processed}/${discovered || "?"}${currentMeeting}${discoveryBits}`);
           await new Promise((resolve) => setTimeout(resolve, 900));
           continue;
         }
@@ -920,6 +1118,99 @@
       }
     }
 
+    async function loadCoverageSummary() {
+      try {
+        const res = await fetch("/explore/coverage");
+        if (!res.ok) throw new Error(`coverage load failed (${res.status})`);
+        renderCoverageStats(await res.json());
+      } catch (err) {
+        coverageStatsEl.innerHTML = "";
+        recentRangesEl.innerHTML = `<div class="range-row">${err.message || "Unable to load coverage summary."}</div>`;
+      }
+    }
+
+    async function loadRangeCacheStatus() {
+      try {
+        const params = new URLSearchParams({
+          from_date: fromDate.value,
+          to_date: toDate.value,
+          crawl: String(document.getElementById("crawl").checked),
+          chunk_days: document.getElementById("chunkDays").value || "31",
+          cache_ttl_minutes: document.getElementById("cacheTtlMinutes").value || "60",
+        });
+        const res = await fetch(`/ingest/cache-status?${params.toString()}`);
+        if (!res.ok) throw new Error(`cache status failed (${res.status})`);
+        renderRangeCacheStatus(await res.json());
+      } catch (err) {
+        rangeCacheStatusEl.textContent = err.message || "Cache status unavailable.";
+      }
+    }
+
+    async function loadStoredMeetingsBrowse() {
+      browseStoredMeetingsBtn.disabled = true;
+      storedMeetingsListEl.innerHTML = `<div class="browse-row">Loading stored meetings...</div>`;
+      setStatus("Loading stored meetings from local database...");
+      try {
+        const params = new URLSearchParams({
+          limit: "25",
+          date_from: fromDate.value || "",
+          date_to: toDate.value || "",
+        });
+        const topic = (topicEl.value || "").trim();
+        if (topic) params.set("topic", topic);
+        const res = await fetch(`/stored/meetings?${params.toString()}`);
+        if (!res.ok) throw new Error(`stored meetings load failed (${res.status})`);
+        renderStoredMeetingsBrowse(await res.json());
+        setStatus("Loaded stored meetings from local database.");
+      } catch (err) {
+        storedMeetingsListEl.innerHTML = `<div class="browse-row">${err.message || "Unable to load stored meetings."}</div>`;
+        setStatus(err.message || "Unable to load stored meetings.", true);
+      } finally {
+        browseStoredMeetingsBtn.disabled = false;
+      }
+    }
+
+    async function loadTopicBrowser() {
+      try {
+        const q = (topicEl.value || "").trim();
+        const url = q ? `/explore/topics?q=${encodeURIComponent(q)}&limit=20` : "/explore/topics?limit=20";
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`topic browser load failed (${res.status})`);
+        renderTopicBrowser(await res.json());
+      } catch (err) {
+        topicBrowserListEl.innerHTML = `<div class="browse-row">${err.message || "Unable to load topic browser."}</div>`;
+      }
+    }
+
+    async function openStoredMeeting(meetingId) {
+      runBtn.disabled = true;
+      const meetingNum = Number(meetingId);
+      selectedStoredMeetingId = Number.isFinite(meetingNum) ? meetingNum : null;
+      setStatus(`Loading stored meeting ${meetingId}...`);
+      for (const row of storedMeetingsListEl.querySelectorAll(".browse-row")) {
+        row.classList.remove("active");
+      }
+      const activeBtn = storedMeetingsListEl.querySelector(`[data-open-meeting-id="${meetingId}"]`);
+      if (activeBtn && activeBtn.closest(".browse-row")) {
+        activeBtn.closest(".browse-row").classList.add("active");
+      }
+      try {
+        const topic = (topicEl.value || "").trim();
+        const loaded = await loadAgendaForMeetings([meetingNum], topic);
+        lastMeetingResults = loaded.meetingResults;
+        renderResults(lastMeetingResults, topic);
+        document.getElementById("kItems").textContent = String(loaded.totalItems);
+        summaryEl.hidden = false;
+        if (mainColEl instanceof HTMLElement) mainColEl.scrollTop = 0;
+        void loadStoredMeetingsBrowse();
+        setStatus(`Loaded stored meeting ${meetingId}.`);
+      } catch (err) {
+        setStatus(err.message || "Unable to load stored meeting.", true);
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
     async function loadStartupExplore() {
       try {
         const res = await fetch("/explore/popular");
@@ -1012,6 +1303,8 @@
         crawl: String(document.getElementById("crawl").checked),
         chunk_days: document.getElementById("chunkDays").value,
         store_raw: String(document.getElementById("storeRaw").checked),
+        use_recent_cache: String(document.getElementById("useRecentCache").checked),
+        cache_ttl_minutes: document.getElementById("cacheTtlMinutes").value,
       });
 
       const topic = topicEl.value;
@@ -1033,6 +1326,10 @@
         lastIngestSummary = ingest;
 
         renderResults(lastMeetingResults, topic);
+        await loadRangeCacheStatus();
+        await loadCoverageSummary();
+        await loadStoredMeetingsBrowse();
+        await loadTopicBrowser();
         setStatus("Completed.");
       } catch (error) {
         setStatus(error.message || "Something went wrong.", true);
@@ -1069,6 +1366,10 @@
     });
     loadRuntimeDiagnostics();
     loadStartupExplore();
+    loadCoverageSummary();
+    loadRangeCacheStatus();
+    loadStoredMeetingsBrowse();
+    loadTopicBrowser();
     setSidebarView("search");
     syncWorkspaceHeight();
     window.addEventListener("resize", syncWorkspaceHeight);
@@ -1076,12 +1377,24 @@
       if (suggestTimer) clearTimeout(suggestTimer);
       suggestTimer = setTimeout(loadSuggestions, 180);
     });
+    browseStoredMeetingsBtn.addEventListener("click", loadStoredMeetingsBrowse);
+    refreshTopicBrowserBtn.addEventListener("click", loadTopicBrowser);
     entitySearchEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         searchEntities();
       }
     });
+    for (const el of [fromDate, toDate, document.getElementById("crawl"), document.getElementById("chunkDays"), document.getElementById("cacheTtlMinutes")]) {
+      el.addEventListener("input", () => {
+        if (coverageTimer) clearTimeout(coverageTimer);
+        coverageTimer = setTimeout(loadRangeCacheStatus, 180);
+      });
+      el.addEventListener("change", () => {
+        if (coverageTimer) clearTimeout(coverageTimer);
+        coverageTimer = setTimeout(loadRangeCacheStatus, 100);
+      });
+    }
 
     document.addEventListener("click", (event) => {
       const target = event.target;
@@ -1148,6 +1461,36 @@
       if (!(target instanceof HTMLElement)) return;
       if (target.closest(".search-box")) return;
       if (!entitySuggestionsEl.hidden) renderSuggestions([]);
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-open-meeting-id]");
+      if (!(button instanceof HTMLElement)) return;
+      openStoredMeeting(button.dataset.openMeetingId);
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-topic-browser]");
+      if (!(button instanceof HTMLElement)) return;
+      topicEl.value = button.dataset.topicBrowser || "";
+      rerunTopicOnly(topicEl.value);
+      loadStoredMeetingsBrowse();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-apply-range]");
+      if (!(button instanceof HTMLElement)) return;
+      fromDate.value = button.dataset.rangeFrom || fromDate.value;
+      toDate.value = button.dataset.rangeTo || toDate.value;
+      document.getElementById("chunkDays").value = button.dataset.rangeChunk || document.getElementById("chunkDays").value;
+      document.getElementById("crawl").checked = (button.dataset.rangeCrawl || "true") === "true";
+      loadRangeCacheStatus();
     });
   </script>
 </body>

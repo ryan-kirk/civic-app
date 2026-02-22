@@ -81,3 +81,49 @@ def test_ingest_range_crawl_stores_raw_data(monkeypatch, tmp_path):
         raw = db.query(MeetingRawData).filter(MeetingRawData.meeting_id == 1408).one()
         assert "Meeting 1408" in raw.meeting_data_json
         assert "Agenda Item 1408" in raw.meeting_documents_json
+
+
+def test_ingest_range_reuses_recent_discovery_cache(monkeypatch, tmp_path):
+    calls = {"list_meetings": 0}
+
+    def fake_list_meetings(date_from: str, date_to: str):
+        calls["list_meetings"] += 1
+        return [{"Id": 1408}]
+
+    monkeypatch.setattr("app.ingest.cw.list_meetings", fake_list_meetings)
+    monkeypatch.setattr("app.ingest.cw.get_meeting_data", _fake_meeting_data)
+    monkeypatch.setattr("app.ingest.cw.get_meeting_documents", _fake_meeting_documents)
+
+    test_db_path = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{test_db_path}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with TestingSessionLocal() as db:
+        first = ingest_range(
+            db,
+            from_date="2026-01-01",
+            to_date="2026-01-31",
+            limit=10,
+            crawl=True,
+            chunk_days=31,
+            store_raw=False,
+            use_recent_cache=True,
+            cache_ttl_minutes=60,
+        )
+        second = ingest_range(
+            db,
+            from_date="2026-01-01",
+            to_date="2026-01-31",
+            limit=10,
+            crawl=True,
+            chunk_days=31,
+            store_raw=False,
+            use_recent_cache=True,
+            cache_ttl_minutes=60,
+        )
+
+        assert calls["list_meetings"] == 1
+        assert first["cache_hit"] is False
+        assert second["cache_hit"] is True
+        assert second["discovery_source"] == "cache"

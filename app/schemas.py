@@ -124,3 +124,23 @@ class MeetingOut(BaseModel):
     location: str
     type_id: int
     video_url: str
+
+
+class StoredMeetingSummaryOut(BaseModel):
+    meeting_id: int
+    name: str
+    date: str
+    time: str
+    location: str
+    agenda_item_count: int
+    document_count: int
+    entity_count: int
+    minutes_count: int
+    matched_topic_count: int = 0
+
+
+class ExploreTopicSummaryOut(BaseModel):
+    topic: str
+    agenda_item_count: int
+    meeting_count: int
+    recent_meeting_ids: List[int] = Field(default_factory=list)

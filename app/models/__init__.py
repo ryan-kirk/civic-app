@@ -69,6 +69,29 @@ class MeetingRawData(Base):
 	meeting = relationship("Meeting")
 
 
+class MeetingRangeDiscoveryCache(Base):
+	__tablename__ = "meeting_range_discovery_cache"
+	__table_args__ = (
+		UniqueConstraint(
+			"from_date",
+			"to_date",
+			"crawl",
+			"chunk_days",
+			name="uq_range_discovery_cache_key",
+		),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	from_date: Mapped[str] = mapped_column(String, index=True)
+	to_date: Mapped[str] = mapped_column(String, index=True)
+	crawl: Mapped[int] = mapped_column(Integer, default=1, index=True)  # sqlite bool-ish
+	chunk_days: Mapped[int] = mapped_column(Integer, default=31)
+	meeting_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+	discovered_count: Mapped[int] = mapped_column(Integer, default=0)
+	last_fetched_at: Mapped[str] = mapped_column(String, default="")
+	last_used_at: Mapped[str] = mapped_column(String, default="")
+
+
 class MeetingMinutesMetadata(Base):
 	__tablename__ = "meeting_minutes_metadata"
 	__table_args__ = (

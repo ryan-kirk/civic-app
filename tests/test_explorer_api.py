@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.entities import extract_entities_from_text, replace_entity_mentions_for_source
 from app.main import app, get_db
-from app.models import AgendaItem, Meeting
+from app.models import AgendaItem, Meeting, MeetingRangeDiscoveryCache
 
 
 def test_entity_suggest_and_explore_views(tmp_path):
@@ -58,6 +58,20 @@ def test_entity_suggest_and_explore_views(tmp_path):
         )
         db.commit()
 
+        db.add(
+            MeetingRangeDiscoveryCache(
+                from_date="2026-01-01",
+                to_date="2026-02-28",
+                crawl=1,
+                chunk_days=31,
+                meeting_ids_json="[5001,5002]",
+                discovered_count=2,
+                last_fetched_at="2026-02-22T12:00:00Z",
+                last_used_at="2026-02-22T12:05:00Z",
+            )
+        )
+        db.commit()
+
     try:
         client = TestClient(app)
 
@@ -97,5 +111,47 @@ def test_entity_suggest_and_explore_views(tmp_path):
         pp = pop.json()
         assert "entities" in pp and "topics" in pp
         assert pp["entities"]
+
+        topics = client.get("/explore/topics")
+        assert topics.status_code == 200
+        tp2 = topics.json()
+        assert tp2
+        assert any(row["topic"] for row in tp2)
+
+        stored = client.get("/stored/meetings", params={"limit": 10})
+        assert stored.status_code == 200
+        sp2 = stored.json()
+        assert sp2
+        row = next(r for r in sp2 if r["meeting_id"] == 5002)
+        assert row["agenda_item_count"] >= 1
+        assert row["entity_count"] >= 1
+
+        stored_topic = client.get("/stored/meetings", params={"topic": "infrastructure_transport", "limit": 10})
+        assert stored_topic.status_code == 200
+        stp = stored_topic.json()
+        assert any(r["matched_topic_count"] >= 1 for r in stp)
+
+        cov = client.get("/explore/coverage")
+        assert cov.status_code == 200
+        cv = cov.json()
+        assert cv["meeting_count"] >= 2
+        assert cv["entity_count"] >= 1
+        assert cv["recent_discovery_ranges"]
+
+        cache_status = client.get(
+            "/ingest/cache-status",
+            params={
+                "from_date": "2026-01-01",
+                "to_date": "2026-02-28",
+                "crawl": "true",
+                "chunk_days": 31,
+                "cache_ttl_minutes": 999999,
+            },
+        )
+        assert cache_status.status_code == 200
+        cs = cache_status.json()
+        assert cs["has_cache"] is True
+        assert cs["cache_fresh"] is True
+        assert cs["discovered_count"] == 2
     finally:
         app.dependency_overrides.clear()

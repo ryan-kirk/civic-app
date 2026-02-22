@@ -1,5 +1,5 @@
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Callable
 
 from sqlalchemy.orm import Session
@@ -7,7 +7,14 @@ from . import civicweb_client as cw
 from .entities import extract_entities_from_text, replace_entity_mentions_for_source
 from .minutes import upsert_minutes_metadata_from_document
 from .parser import parse_agenda_html
-from .models import Meeting, AgendaItem, Document, MeetingMinutesMetadata, MeetingRawData
+from .models import (
+    Meeting,
+    AgendaItem,
+    Document,
+    MeetingMinutesMetadata,
+    MeetingRawData,
+    MeetingRangeDiscoveryCache,
+)
 
 def upsert_meeting(db: Session, meeting_id: int, meeting_data: dict):
     m = db.get(Meeting, meeting_id)
@@ -184,6 +191,101 @@ def _collect_meeting_ids(from_date: str, to_date: str, chunk_days: int = 31) -> 
     return ids
 
 
+def _utcnow_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _get_range_discovery_cache(
+    db: Session,
+    *,
+    from_date: str,
+    to_date: str,
+    crawl: bool,
+    chunk_days: int,
+) -> MeetingRangeDiscoveryCache | None:
+    return (
+        db.query(MeetingRangeDiscoveryCache)
+        .filter(
+            MeetingRangeDiscoveryCache.from_date == from_date,
+            MeetingRangeDiscoveryCache.to_date == to_date,
+            MeetingRangeDiscoveryCache.crawl == (1 if crawl else 0),
+            MeetingRangeDiscoveryCache.chunk_days == int(chunk_days),
+        )
+        .one_or_none()
+    )
+
+
+def _read_cached_meeting_ids(
+    db: Session,
+    *,
+    from_date: str,
+    to_date: str,
+    crawl: bool,
+    chunk_days: int,
+    cache_ttl_minutes: int,
+) -> tuple[list[int], MeetingRangeDiscoveryCache] | tuple[None, MeetingRangeDiscoveryCache | None]:
+    row = _get_range_discovery_cache(
+        db,
+        from_date=from_date,
+        to_date=to_date,
+        crawl=crawl,
+        chunk_days=chunk_days,
+    )
+    if not row or not row.last_fetched_at:
+        return (None, row)
+
+    try:
+        fetched_at = datetime.fromisoformat(row.last_fetched_at.replace("Z", "+00:00"))
+    except ValueError:
+        return (None, row)
+
+    age = datetime.now(fetched_at.tzinfo) - fetched_at
+    if age > timedelta(minutes=max(cache_ttl_minutes, 0)):
+        return (None, row)
+
+    try:
+        ids_raw = json.loads(row.meeting_ids_json or "[]")
+    except json.JSONDecodeError:
+        return (None, row)
+    ids = [mid for mid in ids_raw if isinstance(mid, int)]
+    row.last_used_at = _utcnow_iso()
+    return (ids, row)
+
+
+def _write_cached_meeting_ids(
+    db: Session,
+    *,
+    from_date: str,
+    to_date: str,
+    crawl: bool,
+    chunk_days: int,
+    meeting_ids: list[int],
+) -> MeetingRangeDiscoveryCache:
+    row = _get_range_discovery_cache(
+        db,
+        from_date=from_date,
+        to_date=to_date,
+        crawl=crawl,
+        chunk_days=chunk_days,
+    )
+    if not row:
+        row = MeetingRangeDiscoveryCache(
+            from_date=from_date,
+            to_date=to_date,
+            crawl=1 if crawl else 0,
+            chunk_days=int(chunk_days),
+        )
+        db.add(row)
+
+    now = _utcnow_iso()
+    row.meeting_ids_json = json.dumps(meeting_ids, ensure_ascii=True)
+    row.discovered_count = len(meeting_ids)
+    row.last_fetched_at = now
+    row.last_used_at = now
+    db.flush()
+    return row
+
+
 def ingest_range(
     db: Session,
     from_date: str,
@@ -192,19 +294,53 @@ def ingest_range(
     crawl: bool = True,
     chunk_days: int = 31,
     store_raw: bool = True,
+    use_recent_cache: bool = True,
+    cache_ttl_minutes: int = 60,
     progress_callback: Callable[[dict], None] | None = None,
 ):
-    if crawl:
-        ids = _collect_meeting_ids(from_date=from_date, to_date=to_date, chunk_days=chunk_days)
+    cache_hit = False
+    discovery_source = "network"
+    cached_row: MeetingRangeDiscoveryCache | None = None
+    ids: list[int]
+    if use_recent_cache:
+        cached_ids, cached_row = _read_cached_meeting_ids(
+            db,
+            from_date=from_date,
+            to_date=to_date,
+            crawl=crawl,
+            chunk_days=chunk_days,
+            cache_ttl_minutes=cache_ttl_minutes,
+        )
+        if cached_ids is not None:
+            ids = cached_ids
+            cache_hit = True
+            discovery_source = "cache"
+        else:
+            ids = []
     else:
-        meetings = cw.list_meetings(from_date, to_date)
         ids = []
-        seen: set[int] = set()
-        for m in meetings:
-            mid = m.get("Id")
-            if isinstance(mid, int) and mid not in seen:
-                seen.add(mid)
-                ids.append(mid)
+
+    if not cache_hit:
+        if crawl:
+            ids = _collect_meeting_ids(from_date=from_date, to_date=to_date, chunk_days=chunk_days)
+        else:
+            meetings = cw.list_meetings(from_date, to_date)
+            ids = []
+            seen: set[int] = set()
+            for m in meetings:
+                mid = m.get("Id")
+                if isinstance(mid, int) and mid not in seen:
+                    seen.add(mid)
+                    ids.append(mid)
+        cached_row = _write_cached_meeting_ids(
+            db,
+            from_date=from_date,
+            to_date=to_date,
+            crawl=crawl,
+            chunk_days=chunk_days,
+            meeting_ids=ids,
+        )
+        db.commit()
 
     ids = ids[: max(limit, 0)]
     if progress_callback:
@@ -214,6 +350,8 @@ def ingest_range(
                 "discovered": len(ids),
                 "processed": 0,
                 "current_meeting_id": None,
+                "discovery_source": discovery_source,
+                "cache_hit": cache_hit,
             }
         )
 
@@ -228,6 +366,8 @@ def ingest_range(
                     "discovered": len(ids),
                     "processed": i - 1,
                     "current_meeting_id": mid,
+                    "discovery_source": discovery_source,
+                    "cache_hit": cache_hit,
                 }
             )
         try:
@@ -248,6 +388,8 @@ def ingest_range(
                     "discovered": len(ids),
                     "processed": i,
                     "current_meeting_id": mid,
+                    "discovery_source": discovery_source,
+                    "cache_hit": cache_hit,
                 }
             )
 
@@ -260,6 +402,8 @@ def ingest_range(
                 "current_meeting_id": None,
                 "succeeded": succeeded,
                 "failed": failed,
+                "discovery_source": discovery_source,
+                "cache_hit": cache_hit,
             }
         )
 
@@ -268,6 +412,11 @@ def ingest_range(
         "to_date": to_date,
         "crawl": crawl,
         "chunk_days": chunk_days,
+        "use_recent_cache": use_recent_cache,
+        "cache_ttl_minutes": cache_ttl_minutes,
+        "cache_hit": cache_hit,
+        "discovery_source": discovery_source,
+        "cache_last_fetched_at": (cached_row.last_fetched_at if cached_row else ""),
         "discovered": len(ids),
         "ingested": len(results),
         "succeeded": succeeded,

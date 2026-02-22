@@ -4,13 +4,22 @@ import difflib
 import importlib.util
 import re
 import sys
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.config import settings
 from app.db import get_db
-from app.models import AgendaItem, Document, Entity, EntityMention, MeetingMinutesMetadata
+from app.models import (
+    AgendaItem,
+    Document,
+    Entity,
+    EntityMention,
+    Meeting,
+    MeetingMinutesMetadata,
+    MeetingRangeDiscoveryCache,
+)
 from app.services.civicweb_client import CivicWebClient
 from app.classifiers.topics import classify_topics
 from app.extractors.zoning import extract_zoning_signals
@@ -21,11 +30,13 @@ from app.schemas import (
     DocumentSearchOut,
     DocumentOut,
     ExplorePopularOut,
+    ExploreTopicSummaryOut,
     EntitySuggestOut,
     EntityMentionOut,
     RelatedEntityOut,
     EntitySummaryOut,
     MeetingMinutesMetadataOut,
+    StoredMeetingSummaryOut,
     PopularTopicOut,
     TimelineBucketOut,
     ZoningSignalsOut,
@@ -48,6 +59,89 @@ async def runtime_info():
     return {
         "python_executable": sys.executable,
         "pypdf_available": bool(importlib.util.find_spec("pypdf")),
+    }
+
+
+@router.get("/ingest/cache-status")
+def ingest_cache_status(
+    from_date: str,
+    to_date: str,
+    crawl: bool = True,
+    chunk_days: int = 31,
+    cache_ttl_minutes: int = 60,
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(MeetingRangeDiscoveryCache)
+        .filter(
+            MeetingRangeDiscoveryCache.from_date == from_date,
+            MeetingRangeDiscoveryCache.to_date == to_date,
+            MeetingRangeDiscoveryCache.crawl == (1 if crawl else 0),
+            MeetingRangeDiscoveryCache.chunk_days == int(chunk_days),
+        )
+        .one_or_none()
+    )
+    if not row or not row.last_fetched_at:
+        return {
+            "has_cache": False,
+            "cache_fresh": False,
+            "discovered_count": 0,
+            "last_fetched_at": "",
+            "cache_ttl_minutes": cache_ttl_minutes,
+        }
+
+    cache_fresh = False
+    if row.last_fetched_at:
+        try:
+            fetched_at = datetime.fromisoformat(row.last_fetched_at.replace("Z", "+00:00"))
+            cache_fresh = (
+                datetime.now(fetched_at.tzinfo) - fetched_at
+            ).total_seconds() <= max(cache_ttl_minutes, 0) * 60
+        except ValueError:
+            cache_fresh = False
+
+    return {
+        "has_cache": True,
+        "cache_fresh": cache_fresh,
+        "discovered_count": int(row.discovered_count or 0),
+        "last_fetched_at": row.last_fetched_at or "",
+        "last_used_at": row.last_used_at or "",
+        "cache_ttl_minutes": cache_ttl_minutes,
+    }
+
+
+@router.get("/explore/coverage")
+def explore_coverage(db: Session = Depends(get_db)):
+    meeting_count = db.query(func.count(Meeting.meeting_id)).scalar() or 0
+    agenda_count = db.query(func.count(AgendaItem.id)).scalar() or 0
+    document_count = db.query(func.count(Document.id)).scalar() or 0
+    minutes_count = db.query(func.count(MeetingMinutesMetadata.id)).scalar() or 0
+    entity_count = db.query(func.count(Entity.id)).scalar() or 0
+    cache_rows = (
+        db.query(MeetingRangeDiscoveryCache)
+        .order_by(MeetingRangeDiscoveryCache.last_fetched_at.desc(), MeetingRangeDiscoveryCache.id.desc())
+        .limit(8)
+        .all()
+    )
+    recent_ranges = [
+        {
+            "from_date": r.from_date,
+            "to_date": r.to_date,
+            "crawl": bool(r.crawl),
+            "chunk_days": int(r.chunk_days or 0),
+            "discovered_count": int(r.discovered_count or 0),
+            "last_fetched_at": r.last_fetched_at or "",
+            "last_used_at": r.last_used_at or "",
+        }
+        for r in cache_rows
+    ]
+    return {
+        "meeting_count": int(meeting_count),
+        "agenda_item_count": int(agenda_count),
+        "document_count": int(document_count),
+        "minutes_metadata_count": int(minutes_count),
+        "entity_count": int(entity_count),
+        "recent_discovery_ranges": recent_ranges,
     }
 
 
@@ -94,6 +188,72 @@ async def list_meetings(
 ):
     meetings = await client.list_meetings(date_from=date_from, date_to=date_to)
     return {"count": len(meetings), "items": meetings}
+
+
+@router.get("/stored/meetings", response_model=list[StoredMeetingSummaryOut])
+def list_stored_meetings(
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    topic: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    meetings = db.query(Meeting).order_by(Meeting.meeting_id.desc()).limit(5000).all()
+    q_norm = normalize_text(q or "").lower()
+    topic_norm = normalize_text(topic or "").lower()
+    out: list[StoredMeetingSummaryOut] = []
+    for m in meetings:
+        # `Meeting.date` may be blank in current ingest; fall back to lexical match against name when date filters provided.
+        display_date = m.date or ""
+        if date_from and display_date and display_date < date_from:
+            continue
+        if date_to and display_date and display_date > date_to:
+            continue
+        hay = " ".join([m.name or "", m.location or "", m.time or ""]).lower()
+        if q_norm and q_norm not in hay and q_norm not in str(m.meeting_id):
+            continue
+
+        agenda_items = db.query(AgendaItem).filter(AgendaItem.meeting_id == m.meeting_id).all()
+        docs_count = db.query(func.count(Document.id)).filter(Document.meeting_id == m.meeting_id).scalar() or 0
+        entity_count = (
+            db.query(func.count(func.distinct(EntityMention.entity_id)))
+            .filter(EntityMention.meeting_id == m.meeting_id)
+            .scalar()
+            or 0
+        )
+        minutes_count = (
+            db.query(func.count(MeetingMinutesMetadata.id))
+            .filter(MeetingMinutesMetadata.meeting_id == m.meeting_id)
+            .scalar()
+            or 0
+        )
+        matched_topic_count = 0
+        if topic_norm:
+            for item in agenda_items:
+                item_topics = classify_topics(normalize_text(item.title or ""))
+                if topic_norm in item_topics:
+                    matched_topic_count += 1
+            if matched_topic_count == 0:
+                continue
+
+        out.append(
+            StoredMeetingSummaryOut(
+                meeting_id=m.meeting_id,
+                name=normalize_text(m.name or ""),
+                date=display_date,
+                time=normalize_text(m.time or ""),
+                location=normalize_text(m.location or ""),
+                agenda_item_count=len(agenda_items),
+                document_count=int(docs_count),
+                entity_count=int(entity_count),
+                minutes_count=int(minutes_count),
+                matched_topic_count=matched_topic_count,
+            )
+        )
+        if len(out) >= limit:
+            break
+    return out
 
 
 @router.get("/meetings/{meeting_id}")
@@ -513,6 +673,42 @@ def explore_popular(
         for t, c in sorted(topic_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:topic_limit]
     ]
     return ExplorePopularOut(topics=topics_out, entities=entities_out)
+
+
+@router.get("/explore/topics", response_model=list[ExploreTopicSummaryOut])
+def explore_topics(
+    q: str | None = Query(default=None),
+    limit: int = Query(default=25, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    q_norm = normalize_text(q or "").lower()
+    buckets: dict[str, dict[str, object]] = {}
+    rows = db.query(AgendaItem).order_by(AgendaItem.meeting_id.desc(), AgendaItem.id.desc()).limit(10000).all()
+    for row in rows:
+        title = normalize_text(row.title or "")
+        topics = classify_topics(title)
+        for topic in topics:
+            if q_norm and q_norm not in topic:
+                continue
+            b = buckets.setdefault(topic, {"agenda_item_count": 0, "meeting_ids": []})
+            b["agenda_item_count"] = int(b["agenda_item_count"]) + 1
+            mids = b["meeting_ids"]
+            if row.meeting_id not in mids:
+                mids.append(row.meeting_id)
+
+    ranked = sorted(
+        buckets.items(),
+        key=lambda kv: (-int(kv[1]["agenda_item_count"]), kv[0]),
+    )[:limit]
+    return [
+        ExploreTopicSummaryOut(
+            topic=topic,
+            agenda_item_count=int(data["agenda_item_count"]),
+            meeting_count=len(data["meeting_ids"]),
+            recent_meeting_ids=list(data["meeting_ids"])[:5],
+        )
+        for topic, data in ranked
+    ]
 
 
 @router.get("/explore/timeline", response_model=list[TimelineBucketOut])
