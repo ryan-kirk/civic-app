@@ -5,3 +5,5 @@ sqlalchemy
 beautifulsoup4
 lxml
 pypdf
+pydantic-settings
+httpx

@@ -69,6 +69,10 @@ Current API surface:
   - Starts async ingest job for long historical crawls
 - `GET /ingest/range/job/{job_id}`
   - Polls ingest job status and progress (`processed`, `discovered`, `current_meeting_id`)
+- `GET /stored/meetings`
+  - Browses stored meetings and local coverage without crawling
+- `GET /explore/topics`
+  - Returns topic summaries derived from stored agenda items
 
 ## Parsing Pipeline
 
@@ -188,6 +192,23 @@ Agenda item:
 - Deterministic parsing before LLM extraction
 - No API keys in repo
 - Avoid duplicate dependency pins
+
+## Hosting / Deployment (Current Beta)
+
+- Recommended host: Fly.io (single-instance beta)
+- Deployment artifacts:
+  - `Dockerfile`
+  - `fly.toml`
+- Runtime assumptions today:
+  - SQLite on local persistent volume (`/data/civicwatch.db`)
+  - in-memory ingest job state (`app/jobs.py`)
+  - single app instance only
+
+Beta constraints:
+
+- Do not scale to multiple app instances yet
+- Keep ingest throttles enabled (single active job + cooldown + max range span)
+- Use mounted persistent volume for SQLite durability
 
 ## Acceptance Checks For Parsing Changes
 
