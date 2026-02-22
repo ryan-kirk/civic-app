@@ -16,6 +16,12 @@ This app is currently designed for a **single instance** beta deployment:
 
 Use a Fly volume and keep machine count at `1`.
 
+Dependency note:
+
+- Docker/Fly installs runtime packages from `requirements.txt`
+- Keep `requirements.txt` and `pyproject.toml` dependency pins in sync
+- Treat `requirements.txt` as the deployment runtime source of truth
+
 ### Files Added For Deploy
 
 - `Dockerfile`

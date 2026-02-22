@@ -192,6 +192,8 @@ Agenda item:
 - Deterministic parsing before LLM extraction
 - No API keys in repo
 - Avoid duplicate dependency pins
+- Deployment runtime dependencies are installed from `requirements.txt` (Docker/Fly)
+- Keep `requirements.txt` and `pyproject.toml` dependency pins synchronized
 
 ## Hosting / Deployment (Current Beta)
 

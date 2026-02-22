@@ -10,7 +10,7 @@ dependencies = [
   "fastapi==0.115.6",
   "uvicorn[standard]==0.30.6",
   "sqlalchemy==2.0.36",
-  "pydantic==2.10.3",
+  "pydantic==2.12.5",
   "beautifulsoup4==4.12.3",
   "lxml==5.3.0",
   "requests==2.32.3",
