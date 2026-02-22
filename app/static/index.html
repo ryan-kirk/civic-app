@@ -15,6 +15,7 @@
       --line: #d7d2c8;
       --ok: #0f766e;
       --warn: #b45309;
+      --chip: #edf6f8;
     }
     * { box-sizing: border-box; }
     body {
@@ -54,6 +55,7 @@
       font-size: 0.95rem;
       background: white;
     }
+    .hint { margin-top: 4px; font-size: .78rem; color: var(--muted); }
     .col-2 { grid-column: span 2; }
     .col-1 { grid-column: span 1; }
     .checks { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
@@ -74,11 +76,22 @@
     button:hover { transform: translateY(-1px); }
     button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
-    .status {
-      margin-top: 10px;
-      font-size: .92rem;
-      color: var(--muted);
-      min-height: 1.25rem;
+    .status { margin-top: 10px; font-size: .92rem; color: var(--muted); min-height: 1.25rem; }
+
+    .progress-wrap { margin-top: 8px; }
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e8e4db;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .2s ease;
     }
 
     .summary {
@@ -96,6 +109,16 @@
     .kpi .k { color: var(--muted); font-size: .8rem; }
     .kpi .v { font-weight: 700; font-size: 1.1rem; margin-top: 4px; }
 
+    .related {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8f6ef;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
     .results { margin-top: 18px; display: grid; gap: 12px; }
     .meeting {
       border: 1px solid var(--line);
@@ -112,8 +135,75 @@
       margin-top: 6px;
       background: #fffcf5;
     }
-    .topics { font-size: .8rem; color: var(--ok); margin-top: 4px; }
-    .signals { font-size: .8rem; color: var(--warn); margin-top: 2px; }
+    .topic-row { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      border: 1px solid #c9dbe0;
+      border-radius: 999px;
+      background: var(--chip);
+      padding: 2px 8px;
+      font-size: .75rem;
+      color: #0b4d5f;
+      cursor: pointer;
+    }
+    .chip.active { background: #c8e8f0; border-color: #7ec3d7; }
+    .signals { font-size: .8rem; color: var(--warn); margin-top: 4px; }
+    .minutes {
+      margin-top: 8px;
+      border: 1px dashed #d7d2c8;
+      border-radius: 8px;
+      background: #f9f9f6;
+      padding: 8px;
+    }
+    .minutes-title { font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
+    .minutes-row { font-size: .8rem; color: #2d3431; margin-top: 4px; }
+    .minutes-row a { color: #0b4d5f; text-decoration: none; }
+    .minutes-row a:hover { text-decoration: underline; }
+    .entity-panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+    }
+    .entity-title { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+    .entity-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .entity-chip {
+      border: 1px solid #d8dad1;
+      background: #f4f6ee;
+      color: #374133;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: .75rem;
+      cursor: pointer;
+    }
+    .search-panel {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8f6ef;
+      padding: 10px;
+    }
+    .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-row input { flex: 1 1 240px; }
+    .search-results { margin-top: 8px; display: grid; gap: 6px; }
+    .search-result {
+      border: 1px solid #e2ddd2;
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: .82rem;
+    }
+    .search-result button {
+      background: transparent;
+      color: #0b4d5f;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+    .search-result button:hover { text-decoration: underline; }
 
     @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr 1fr; }
@@ -147,6 +237,7 @@
           <div class="col-1">
             <label for="chunkDays">Chunk Days</label>
             <input id="chunkDays" name="chunkDays" type="number" min="1" max="90" value="31" />
+            <div class="hint">Days per CivicWeb crawl window. Smaller = more API calls, safer for long ranges.</div>
           </div>
           <div class="col-2">
             <label for="topic">Topic</label>
@@ -177,11 +268,26 @@
       </form>
 
       <div id="status" class="status"></div>
+      <div class="progress-wrap" id="progressWrap" hidden>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      </div>
 
       <div id="summary" class="summary" hidden>
         <div class="kpi"><div class="k">Discovered</div><div class="v" id="kDiscovered">0</div></div>
         <div class="kpi"><div class="k">Ingested</div><div class="v" id="kIngested">0</div></div>
         <div class="kpi"><div class="k">Agenda Items Returned</div><div class="v" id="kItems">0</div></div>
+      </div>
+
+      <div id="related" class="related" hidden></div>
+
+      <div class="search-panel">
+        <div class="entity-title">Explore Saved Entities</div>
+        <div class="search-row">
+          <input id="entitySearch" type="search" placeholder="Search entities (person, org, address, ordinance, date)..." />
+          <button id="entitySearchBtn" type="button">Search Entities</button>
+        </div>
+        <div id="entitySearchResults" class="search-results"></div>
+        <div id="entityRelatedResults" class="search-results"></div>
       </div>
     </section>
 
@@ -194,15 +300,35 @@
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
     const summaryEl = document.getElementById("summary");
+    const relatedEl = document.getElementById("related");
+    const progressWrap = document.getElementById("progressWrap");
+    const progressBar = document.getElementById("progressBar");
+    const entitySearchEl = document.getElementById("entitySearch");
+    const entitySearchBtn = document.getElementById("entitySearchBtn");
+    const entitySearchResultsEl = document.getElementById("entitySearchResults");
+    const entityRelatedResultsEl = document.getElementById("entityRelatedResults");
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
+    const topicEl = document.getElementById("topic");
     fromDate.value = fromDate.value || "2026-01-01";
     toDate.value = toDate.value || new Date().toISOString().slice(0, 10);
+
+    let lastMeetingResults = [];
+    let lastIngestSummary = null;
 
     function setStatus(msg, isError = false) {
       statusEl.textContent = msg;
       statusEl.style.color = isError ? "#b91c1c" : "#5e645f";
+    }
+
+    function setProgress(processed, discovered) {
+      if (!discovered) {
+        progressBar.style.width = "0%";
+        return;
+      }
+      const pct = Math.max(0, Math.min(100, Math.round((processed / discovered) * 100)));
+      progressBar.style.width = `${pct}%`;
     }
 
     function renderSignals(signals) {
@@ -212,25 +338,222 @@
       return `<div class="signals">${pairs.map(([k, v]) => `${k}: ${v}`).join(" | ")}</div>`;
     }
 
-    function renderItem(item) {
+    function topicChip(topic, activeTopic) {
+      const active = topic === activeTopic ? "active" : "";
+      return `<button type="button" class="chip ${active}" data-topic="${topic}">${topic}</button>`;
+    }
+
+    function renderItem(item, activeTopic) {
+      const topics = item.topics || [];
       return `
         <div class="item">
           <strong>${item.item_key}</strong> ${item.title}
-          <div class="topics">topics: ${(item.topics || []).join(", ") || "none"}</div>
+          <div class="topic-row">${topics.map((t) => topicChip(t, activeTopic)).join("") || ""}</div>
           ${renderSignals(item.zoning_signals)}
         </div>
       `;
     }
 
-    function renderMeeting(meetingId, items) {
-      const title = `Meeting ${meetingId}`;
+    function renderMinutes(metadataRows) {
+      if (!metadataRows || !metadataRows.length) return "";
+      return `
+        <div class="minutes">
+          <div class="minutes-title">Extracted Minutes Metadata</div>
+          ${metadataRows
+            .map((m) => {
+              const bits = [];
+              if (m.detected_date) bits.push(`date: ${m.detected_date}`);
+              if (Number.isInteger(m.page_count)) bits.push(`pages: ${m.page_count}`);
+              if (m.status) bits.push(`status: ${m.status}`);
+              return `<div class="minutes-row"><a href="${m.url}" target="_blank" rel="noreferrer">${m.title || `document ${m.document_id}`}</a>${bits.length ? ` (${bits.join(" | ")})` : ""}</div>`;
+            })
+            .join("")}
+        </div>
+      `;
+    }
+
+    function renderEntitySummaryInline(entities) {
+      if (!entities || !entities.length) return "";
+      const top = entities.slice(0, 12);
+      return `
+        <div class="entity-panel">
+          <div class="entity-title">Entities in this meeting</div>
+          <div class="entity-list">
+            ${top.map((e) => `<button type="button" class="entity-chip" data-entity-query="${e.display_value}">${e.display_value} (${e.entity_type})</button>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMeeting(meetingId, items, minutesMetadata, entities, activeTopic) {
       return `
         <article class="meeting">
-          <h3>${title}</h3>
+          <h3>Meeting ${meetingId}</h3>
           <div class="meta">${items.length} matching agenda item(s)</div>
-          ${items.map(renderItem).join("") || "<div class=\"meta\">No matching agenda items.</div>"}
+          ${items.map((item) => renderItem(item, activeTopic)).join("") || "<div class=\"meta\">No matching agenda items.</div>"}
+          ${renderMinutes(minutesMetadata)}
+          ${renderEntitySummaryInline(entities)}
         </article>
       `;
+    }
+
+    function renderRelatedTopics(meetingResults, activeTopic) {
+      if (!activeTopic) {
+        relatedEl.hidden = true;
+        return;
+      }
+
+      const counts = new Map();
+      for (const r of meetingResults) {
+        for (const item of r.agendaItems) {
+          for (const t of item.topics || []) {
+            if (t === activeTopic) continue;
+            counts.set(t, (counts.get(t) || 0) + 1);
+          }
+        }
+      }
+
+      const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (!ranked.length) {
+        relatedEl.hidden = false;
+        relatedEl.textContent = `No related topics found for ${activeTopic}.`;
+        return;
+      }
+
+      relatedEl.hidden = false;
+      relatedEl.innerHTML = `Related to <strong>${activeTopic}</strong>: ${ranked
+        .map(([topic, count]) => `<button type="button" class="chip" data-topic="${topic}">${topic} (${count})</button>`)
+        .join(" ")}`;
+    }
+
+    async function startIngestJob(params) {
+      const response = await fetch(`/ingest/range/job?${params.toString()}`, { method: "POST" });
+      if (!response.ok) throw new Error(`Unable to start ingest job (${response.status})`);
+      return response.json();
+    }
+
+    async function pollJob(jobId) {
+      while (true) {
+        const response = await fetch(`/ingest/range/job/${jobId}`);
+        if (!response.ok) throw new Error(`Unable to fetch job status (${response.status})`);
+        const job = await response.json();
+        const progress = job.progress || {};
+        const discovered = Number(progress.discovered || 0);
+        const processed = Number(progress.processed || 0);
+        setProgress(processed, discovered);
+
+        const currentMeeting = progress.current_meeting_id ? ` (meeting ${progress.current_meeting_id})` : "";
+        if (job.status === "running" || job.status === "queued") {
+          setStatus(`Ingest progress: ${processed}/${discovered || "?"}${currentMeeting}`);
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          continue;
+        }
+
+        if (job.status === "failed") {
+          throw new Error(job.error || "Ingest job failed.");
+        }
+
+        return job.result;
+      }
+    }
+
+    async function loadAgendaForMeetings(meetingIds, topic) {
+      const out = [];
+      let total = 0;
+
+      for (let i = 0; i < meetingIds.length; i += 1) {
+        const meetingId = meetingIds[i];
+        setStatus(`Loading agenda ${i + 1}/${meetingIds.length} (meeting ${meetingId})...`);
+
+        const agendaParams = new URLSearchParams();
+        if (topic) agendaParams.set("topic", topic);
+
+        const agendaRes = await fetch(`/meetings/${meetingId}/agenda?${agendaParams.toString()}`);
+        if (!agendaRes.ok) continue;
+
+        const agendaItems = await agendaRes.json();
+        if (agendaItems.length || !topic) {
+          let minutesMetadata = [];
+          const minutesRes = await fetch(`/meetings/${meetingId}/minutes-metadata`);
+          if (minutesRes.ok) {
+            minutesMetadata = await minutesRes.json();
+          }
+
+          let entities = [];
+          const entitiesRes = await fetch(`/meetings/${meetingId}/entities?limit=50`);
+          if (entitiesRes.ok) {
+            entities = await entitiesRes.json();
+          }
+
+          out.push({ meetingId, agendaItems, minutesMetadata, entities });
+          total += agendaItems.length;
+        }
+      }
+
+      return { meetingResults: out, totalItems: total };
+    }
+
+    function renderResults(meetingResults, activeTopic) {
+      if (!meetingResults.length) {
+        resultsEl.innerHTML = `<article class="meeting"><div class="meta">No meetings had matching agenda items for this topic.</div></article>`;
+      } else {
+        resultsEl.innerHTML = meetingResults
+          .map((r) => renderMeeting(r.meetingId, r.agendaItems, r.minutesMetadata || [], r.entities || [], activeTopic))
+          .join("");
+      }
+      renderRelatedTopics(meetingResults, activeTopic);
+    }
+
+    function renderEntitySearchResults(rows) {
+      if (!rows.length) {
+        entitySearchResultsEl.innerHTML = `<div class="search-result">No matching entities found.</div>`;
+        return;
+      }
+      entitySearchResultsEl.innerHTML = rows.map((row) => {
+        const mentions = (row.mentions || []).map((m) => `${m.source_type}: ${m.mention_text}`).join(" | ");
+        return `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • mentions: ${row.mention_count}</span><div class="meta">${mentions || "No mention preview"}</div></div>`;
+      }).join("");
+    }
+
+    function renderEntityRelatedResults(rows, entityLabel) {
+      if (!rows.length) {
+        entityRelatedResultsEl.innerHTML = `<div class="search-result">No related entities found for ${entityLabel}.</div>`;
+        return;
+      }
+      entityRelatedResultsEl.innerHTML = rows.map((row) => (
+        `<div class="search-result"><strong>${row.display_value}</strong> <span class="meta">(${row.entity_type}) • shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count}</span></div>`
+      )).join("");
+    }
+
+    async function loadRelatedEntities(entityId, entityLabel) {
+      try {
+        const res = await fetch(`/entities/${entityId}/related?limit=15`);
+        if (!res.ok) throw new Error(`Related lookup failed (${res.status})`);
+        const rows = await res.json();
+        renderEntityRelatedResults(rows, entityLabel);
+      } catch (err) {
+        entityRelatedResultsEl.innerHTML = `<div class="search-result">${err.message || "Related lookup failed."}</div>`;
+      }
+    }
+
+    async function searchEntities() {
+      const q = (entitySearchEl.value || "").trim();
+      if (!q) {
+        entitySearchResultsEl.innerHTML = "";
+        entityRelatedResultsEl.innerHTML = "";
+        return;
+      }
+      entitySearchBtn.disabled = true;
+      try {
+        const res = await fetch(`/entities/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error(`Entity search failed (${res.status})`);
+        const rows = await res.json();
+        renderEntitySearchResults(rows);
+      } catch (err) {
+        entitySearchResultsEl.innerHTML = `<div class="search-result">${err.message || "Search failed."}</div>`;
+      } finally {
+        entitySearchBtn.disabled = false;
+      }
     }
 
     async function runQuery(event) {
@@ -238,6 +561,9 @@
       runBtn.disabled = true;
       resultsEl.innerHTML = "";
       summaryEl.hidden = true;
+      relatedEl.hidden = true;
+      progressWrap.hidden = false;
+      setProgress(0, 0);
 
       const params = new URLSearchParams({
         from_date: fromDate.value,
@@ -247,46 +573,26 @@
         chunk_days: document.getElementById("chunkDays").value,
         store_raw: String(document.getElementById("storeRaw").checked),
       });
-      const topic = document.getElementById("topic").value;
+
+      const topic = topicEl.value;
 
       try {
-        setStatus("Ingesting meetings...");
-        const ingestRes = await fetch(`/ingest/range?${params.toString()}`, { method: "POST" });
-        if (!ingestRes.ok) {
-          throw new Error(`Ingest failed (${ingestRes.status})`);
-        }
-        const ingest = await ingestRes.json();
+        setStatus("Starting ingest job...");
+        const job = await startIngestJob(params);
+        const ingest = await pollJob(job.job_id);
 
         const meetingIds = (ingest.results || []).map((r) => r.meeting_id).filter(Boolean);
-        setStatus(`Ingested ${meetingIds.length} meetings. Loading agenda items...`);
-
-        const meetingResults = [];
-        let totalItems = 0;
-        for (const meetingId of meetingIds) {
-          const agendaParams = new URLSearchParams();
-          if (topic) agendaParams.set("topic", topic);
-          const agendaRes = await fetch(`/meetings/${meetingId}/agenda?${agendaParams.toString()}`);
-          if (!agendaRes.ok) continue;
-          const agendaItems = await agendaRes.json();
-          if (agendaItems.length || !topic) {
-            meetingResults.push({ meetingId, agendaItems });
-            totalItems += agendaItems.length;
-          }
-        }
+        const loaded = await loadAgendaForMeetings(meetingIds, topic);
 
         document.getElementById("kDiscovered").textContent = String(ingest.discovered || 0);
         document.getElementById("kIngested").textContent = String(ingest.ingested || 0);
-        document.getElementById("kItems").textContent = String(totalItems);
+        document.getElementById("kItems").textContent = String(loaded.totalItems);
         summaryEl.hidden = false;
 
-        if (!meetingResults.length) {
-          resultsEl.innerHTML = `<article class="meeting"><div class="meta">No meetings had matching agenda items for this topic.</div></article>`;
-        } else {
-          resultsEl.innerHTML = meetingResults
-            .map((r) => renderMeeting(r.meetingId, r.agendaItems))
-            .join("");
-        }
+        lastMeetingResults = loaded.meetingResults;
+        lastIngestSummary = ingest;
 
+        renderResults(lastMeetingResults, topic);
         setStatus("Completed.");
       } catch (error) {
         setStatus(error.message || "Something went wrong.", true);
@@ -295,7 +601,59 @@
       }
     }
 
+    async function rerunTopicOnly(topic) {
+      if (!lastIngestSummary) return;
+      runBtn.disabled = true;
+      try {
+        const meetingIds = (lastIngestSummary.results || []).map((r) => r.meeting_id).filter(Boolean);
+        const loaded = await loadAgendaForMeetings(meetingIds, topic);
+        lastMeetingResults = loaded.meetingResults;
+        document.getElementById("kItems").textContent = String(loaded.totalItems);
+        renderResults(lastMeetingResults, topic);
+        setStatus(`Filtered by topic: ${topic || "all"}.`);
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
     form.addEventListener("submit", runQuery);
+    entitySearchBtn.addEventListener("click", searchEntities);
+    entitySearchEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchEntities();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.classList.contains("chip")) return;
+
+      const topic = target.dataset.topic || "";
+      topicEl.value = topic;
+      rerunTopicOnly(topic);
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.classList.contains("entity-chip")) return;
+      const query = target.dataset.entityQuery || "";
+      entitySearchEl.value = query;
+      searchEntities();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("button[data-entity-id]");
+      if (!(button instanceof HTMLElement)) return;
+      const entityId = button.dataset.entityId;
+      const label = button.textContent || "entity";
+      if (!entityId) return;
+      loadRelatedEntities(entityId, label);
+    });
   </script>
 </body>
 </html>

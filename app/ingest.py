@@ -4,9 +4,10 @@ from typing import Callable
 
 from sqlalchemy.orm import Session
 from . import civicweb_client as cw
+from .entities import extract_entities_from_text, replace_entity_mentions_for_source
 from .minutes import upsert_minutes_metadata_from_document
 from .parser import parse_agenda_html
-from .models import Meeting, AgendaItem, Document, MeetingRawData
+from .models import Meeting, AgendaItem, Document, MeetingMinutesMetadata, MeetingRawData
 
 def upsert_meeting(db: Session, meeting_id: int, meeting_data: dict):
     m = db.get(Meeting, meeting_id)
@@ -39,6 +40,21 @@ def upsert_meeting_raw_data(db: Session, meeting_id: int, meeting_data: dict, me
 def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
     meeting_data = cw.get_meeting_data(meeting_id)
     meeting = upsert_meeting(db, meeting_id, meeting_data)
+    meeting_context = " ".join(
+        [
+            str(meeting_data.get("Name") or ""),
+            str(meeting_data.get("Location") or ""),
+            str(meeting_data.get("Time") or ""),
+        ]
+    )
+    replace_entity_mentions_for_source(
+        db,
+        meeting_id=meeting_id,
+        source_type="meeting_metadata",
+        source_id=meeting_id,
+        context_text=meeting_context,
+        entities=extract_entities_from_text(meeting_context),
+    )
 
     docs = cw.get_meeting_documents(meeting_id)
     if store_raw:
@@ -73,6 +89,16 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
 
         db.flush()  # to get item.id
 
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=meeting_id,
+            agenda_item_id=item.id,
+            source_type="agenda_item_title",
+            source_id=item.id,
+            context_text=item.title,
+            entities=extract_entities_from_text(item.title),
+        )
+
         for att in it.get("attachments", []):
             doc = db.query(Document).filter(
                 Document.meeting_id == meeting_id,
@@ -95,6 +121,23 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
                 title=doc.title,
                 url=doc.url,
             )
+
+    db.flush()
+    minutes_rows = (
+        db.query(MeetingMinutesMetadata)
+        .filter(MeetingMinutesMetadata.meeting_id == meeting_id)
+        .all()
+    )
+    for m in minutes_rows:
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=meeting_id,
+            document_id=m.document_id,
+            source_type="minutes_excerpt",
+            source_id=m.id,
+            context_text=m.text_excerpt,
+            entities=extract_entities_from_text(m.text_excerpt),
+        )
 
     db.commit()
     return {"meeting_id": meeting_id, "status": "ok", "agenda_items": len(parsed_items)}

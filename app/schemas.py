@@ -24,6 +24,46 @@ class AgendaItemOut(BaseModel):
     zoning_signals: Optional[ZoningSignalsOut] = None
     documents: List[DocumentOut] = Field(default_factory=list)
 
+
+class MeetingMinutesMetadataOut(BaseModel):
+    meeting_id: int
+    document_id: int
+    title: str
+    url: str
+    detected_date: str
+    page_count: Optional[int] = None
+    text_excerpt: str
+    status: str
+
+
+class EntityMentionOut(BaseModel):
+    source_type: str
+    source_id: int
+    agenda_item_id: Optional[int] = None
+    document_id: Optional[int] = None
+    mention_text: str
+    context_text: str
+    confidence: float
+
+
+class EntitySummaryOut(BaseModel):
+    entity_id: int
+    entity_type: str
+    display_value: str
+    normalized_value: str
+    mention_count: int
+    mentions: List[EntityMentionOut] = Field(default_factory=list)
+
+
+class RelatedEntityOut(BaseModel):
+    entity_id: int
+    entity_type: str
+    display_value: str
+    normalized_value: str
+    cooccurrence_count: int
+    shared_meeting_count: int
+
+
 class MeetingOut(BaseModel):
     meeting_id: int
     name: str

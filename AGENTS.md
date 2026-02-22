@@ -49,6 +49,14 @@ Current API surface:
   - Returns parsed, normalized agenda items from local DB
 - `GET /meetings/{meeting_id}/agenda?topic=zoning`
   - Filters agenda items by computed topic tags
+- `GET /meetings/{meeting_id}/minutes-metadata`
+  - Returns extracted minutes-document metadata for the meeting
+- `GET /meetings/{meeting_id}/entities`
+  - Returns extracted entities and mentions for a meeting
+- `GET /entities/search?q=...`
+  - Searches stored entities across meetings for UI exploration
+- `GET /entities/{entity_id}/related`
+  - Returns co-occurring entities based on shared meeting mentions
 - `POST /ingest/meeting/{meeting_id}`
   - Ingests one meeting into local DB
 - `POST /ingest/range?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD&limit=N`
@@ -57,6 +65,10 @@ Current API surface:
     - `crawl=true|false` (default `true`)
     - `chunk_days=<N>` (default `31`)
     - `store_raw=true|false` (default `true`)
+- `POST /ingest/range/job?from_date=...&to_date=...`
+  - Starts async ingest job for long historical crawls
+- `GET /ingest/range/job/{job_id}`
+  - Polls ingest job status and progress (`processed`, `discovered`, `current_meeting_id`)
 
 ## Parsing Pipeline
 
@@ -78,6 +90,32 @@ Current API surface:
   - `meeting_data_json`
   - `meeting_documents_json`
 - Purpose: retain source data for deterministic re-parsing and future extraction refinements.
+
+## Minutes Metadata Extraction
+
+- During ingest, minute-like documents are detected by title (`minutes`, `meeting minutes`).
+- For minute PDFs, the app attempts deterministic metadata extraction:
+  - `detected_date`
+  - `page_count` (if PDF parser is available)
+  - `text_excerpt` (if PDF parser is available)
+  - `status` (`ok`, `download_failed`, `pdf_parser_unavailable`, etc.)
+- Extracted records are persisted in `meeting_minutes_metadata`.
+
+## Entity Extraction (Deterministic)
+
+- Entities are extracted and persisted during ingest from:
+  - meeting metadata (meeting name/location/time)
+  - agenda item titles
+  - minutes PDF text excerpts
+- Current entity types:
+  - `date`
+  - `address`
+  - `ordinance_number`
+  - `resolution_number`
+  - `organization` (e.g., `LLC`, `Inc`, `Company`)
+- Storage tables:
+  - `entities` (canonical entity values)
+  - `entity_mentions` (source-linked mentions with context)
 
 ## Topic Classification
 

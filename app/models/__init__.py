@@ -86,3 +86,41 @@ class MeetingMinutesMetadata(Base):
 	status: Mapped[str] = mapped_column(String, default="unknown")
 
 	meeting = relationship("Meeting")
+
+
+class Entity(Base):
+	__tablename__ = "entities"
+	__table_args__ = (
+		UniqueConstraint("entity_type", "normalized_value", name="uq_entity_type_normalized"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_type: Mapped[str] = mapped_column(String, index=True)
+	display_value: Mapped[str] = mapped_column(Text, default="")
+	normalized_value: Mapped[str] = mapped_column(String, index=True)
+
+
+class EntityMention(Base):
+	__tablename__ = "entity_mentions"
+	__table_args__ = (
+		UniqueConstraint(
+			"entity_id",
+			"source_type",
+			"source_id",
+			"mention_text",
+			name="uq_entity_mention_source_text",
+		),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.meeting_id"), index=True)
+	agenda_item_id: Mapped[int | None] = mapped_column(ForeignKey("agenda_items.id"), nullable=True, index=True)
+	document_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+	source_type: Mapped[str] = mapped_column(String, index=True)  # agenda_item_title, minutes_excerpt
+	source_id: Mapped[int] = mapped_column(Integer, index=True)   # source row id in its table
+	mention_text: Mapped[str] = mapped_column(Text, default="")
+	context_text: Mapped[str] = mapped_column(Text, default="")
+	confidence: Mapped[float] = mapped_column(default=1.0)
+
+	entity = relationship("Entity")

@@ -4,3 +4,4 @@ uvicorn
 sqlalchemy
 beautifulsoup4
 lxml
+pypdf
