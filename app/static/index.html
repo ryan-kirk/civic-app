@@ -39,6 +39,19 @@
       padding: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,.04);
     }
+    .workspace {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .main-col { min-width: 0; }
+    .side-col { min-width: 0; }
+    .sticky {
+      position: sticky;
+      top: 14px;
+    }
 
     form { display: grid; gap: 12px; }
     .grid {
@@ -147,6 +160,16 @@
     }
     .chip.active { background: #c8e8f0; border-color: #7ec3d7; }
     .signals { font-size: .8rem; color: var(--warn); margin-top: 4px; }
+    .doc-list { margin-top: 6px; display: grid; gap: 4px; }
+    .doc-link {
+      display: inline-block;
+      font-size: .8rem;
+      color: #0b4d5f;
+      text-decoration: none;
+      border-bottom: 1px dotted #9cc5d1;
+      width: fit-content;
+    }
+    .doc-link:hover { text-decoration: underline; }
     .minutes {
       margin-top: 8px;
       border: 1px dashed #d7d2c8;
@@ -177,7 +200,6 @@
       cursor: pointer;
     }
     .search-panel {
-      margin-top: 14px;
       border: 1px solid var(--line);
       border-radius: 10px;
       background: #f8f6ef;
@@ -186,6 +208,7 @@
     .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .search-row input { flex: 1 1 240px; }
     .search-results { margin-top: 8px; display: grid; gap: 6px; }
+    .search-subtitle { margin-top: 10px; font-size: .78rem; color: var(--muted); }
     .search-result {
       border: 1px solid #e2ddd2;
       background: #fff;
@@ -204,11 +227,49 @@
       text-align: left;
     }
     .search-result button:hover { text-decoration: underline; }
+    .runtime-panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+      font-size: .8rem;
+      color: #3e4642;
+    }
+    .runtime-ok { color: #0f766e; }
+    .runtime-warn { color: #b45309; }
+    .mention-list { margin-top: 6px; display: grid; gap: 5px; }
+    .mention-line {
+      border-top: 1px dashed #e6e0d4;
+      padding-top: 5px;
+      color: #525954;
+    }
+    .mention-line:first-child { border-top: 0; padding-top: 0; }
+    .mention-meta {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-bottom: 2px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mention-context {
+      font-size: .78rem;
+      color: #343a36;
+      line-height: 1.35;
+    }
+    .context-hit {
+      background: #fff2bf;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
 
     @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr 1fr; }
       .col-2, .col-1 { grid-column: span 1; }
       .summary { grid-template-columns: 1fr; }
+      .workspace { grid-template-columns: 1fr; }
+      .sticky { position: static; }
     }
   </style>
 </head>
@@ -277,21 +338,28 @@
         <div class="kpi"><div class="k">Ingested</div><div class="v" id="kIngested">0</div></div>
         <div class="kpi"><div class="k">Agenda Items Returned</div><div class="v" id="kItems">0</div></div>
       </div>
-
-      <div id="related" class="related" hidden></div>
-
-      <div class="search-panel">
-        <div class="entity-title">Explore Saved Entities</div>
-        <div class="search-row">
-          <input id="entitySearch" type="search" placeholder="Search entities (person, org, address, ordinance, date)..." />
-          <button id="entitySearchBtn" type="button">Search Entities</button>
-        </div>
-        <div id="entitySearchResults" class="search-results"></div>
-        <div id="entityRelatedResults" class="search-results"></div>
-      </div>
     </section>
 
-    <section id="results" class="results"></section>
+    <section class="workspace">
+      <div class="main-col">
+        <div id="related" class="related" hidden></div>
+        <section id="results" class="results"></section>
+      </div>
+      <aside class="side-col">
+        <div class="search-panel sticky">
+          <div class="entity-title">Explore Saved Entities</div>
+          <div class="search-row">
+            <input id="entitySearch" type="search" placeholder="Search entities (person, org, address, ordinance, date)..." />
+            <button id="entitySearchBtn" type="button">Search Entities</button>
+          </div>
+          <div class="hint">Entity search stays visible while you scroll agenda results. Click a result to load related entities.</div>
+          <div id="runtimePanel" class="runtime-panel">Runtime diagnostics loading...</div>
+          <div id="entitySearchResults" class="search-results"></div>
+          <div id="contentSearchResults" class="search-results"></div>
+          <div id="entityRelatedResults" class="search-results"></div>
+        </div>
+      </aside>
+    </section>
   </main>
 
   <script>
@@ -306,7 +374,9 @@
     const entitySearchEl = document.getElementById("entitySearch");
     const entitySearchBtn = document.getElementById("entitySearchBtn");
     const entitySearchResultsEl = document.getElementById("entitySearchResults");
+    const contentSearchResultsEl = document.getElementById("contentSearchResults");
     const entityRelatedResultsEl = document.getElementById("entityRelatedResults");
+    const runtimePanelEl = document.getElementById("runtimePanel");
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
@@ -345,10 +415,12 @@
 
     function renderItem(item, activeTopic) {
       const topics = item.topics || [];
+      const docs = item.documents || [];
       return `
         <div class="item">
           <strong>${item.item_key}</strong> ${item.title}
           <div class="topic-row">${topics.map((t) => topicChip(t, activeTopic)).join("") || ""}</div>
+          ${docs.length ? `<div class="doc-list">${docs.map((d) => `<a class="doc-link" href="${d.url}" target="_blank" rel="noreferrer">${d.title || `document ${d.document_id}`}</a>`).join("")}</div>` : ""}
           ${renderSignals(item.zoning_signals)}
         </div>
       `;
@@ -509,9 +581,36 @@
         entitySearchResultsEl.innerHTML = `<div class="search-result">No matching entities found.</div>`;
         return;
       }
+
+      const q = (entitySearchEl.value || "").trim();
+      const qRe = q ? new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")})`, "ig") : null;
+      const highlight = (s) => {
+        if (!s) return "";
+        if (!qRe) return s;
+        return s.replace(qRe, `<span class="context-hit">$1</span>`);
+      };
+      const sourceLabel = (m) => {
+        if (m.source_type === "agenda_item_title") return `agenda item ${m.agenda_item_id ?? "?"}`;
+        if (m.source_type === "minutes_excerpt") return `minutes doc ${m.document_id ?? "?"}`;
+        if (m.source_type === "meeting_metadata") return "meeting metadata";
+        return m.source_type;
+      };
+
       entitySearchResultsEl.innerHTML = rows.map((row) => {
-        const mentions = (row.mentions || []).map((m) => `${m.source_type}: ${m.mention_text}`).join(" | ");
-        return `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • mentions: ${row.mention_count}</span><div class="meta">${mentions || "No mention preview"}</div></div>`;
+        const mentionRows = (row.mentions || []).map((m) => {
+          const ctx = highlight(m.context_text || m.mention_text || "");
+          return `
+            <div class="mention-line">
+              <div class="mention-meta">
+                <span>meeting ${m.meeting_id}</span>
+                <span>${sourceLabel(m)}</span>
+                <span>confidence: ${Number(m.confidence || 0).toFixed(2)}</span>
+              </div>
+              <div class="mention-context">${ctx || "(no context)"}</div>
+            </div>
+          `;
+        }).join("");
+        return `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • total mentions: ${row.mention_count}</span><div class="mention-list">${mentionRows || "<div class='meta'>No mention preview</div>"}</div></div>`;
       }).join("");
     }
 
@@ -520,9 +619,50 @@
         entityRelatedResultsEl.innerHTML = `<div class="search-result">No related entities found for ${entityLabel}.</div>`;
         return;
       }
-      entityRelatedResultsEl.innerHTML = rows.map((row) => (
-        `<div class="search-result"><strong>${row.display_value}</strong> <span class="meta">(${row.entity_type}) • shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count}</span></div>`
+      entityRelatedResultsEl.innerHTML = `<div class="entity-title">Related to ${entityLabel}</div>` + rows.map((row) => (
+        `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count}</span></div>`
       )).join("");
+    }
+
+    function renderContentSearchResults(payload, q) {
+      const agenda = payload?.agenda_topics || [];
+      const docs = payload?.documents || [];
+      const esc = (s) => (s || "").replace(/[&<>]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[ch]));
+      const qRe = q ? new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")})`, "ig") : null;
+      const hl = (s) => {
+        const safe = esc(s || "");
+        if (!qRe) return safe;
+        return safe.replace(qRe, `<span class="context-hit">$1</span>`);
+      };
+
+      let html = "";
+      html += `<div class="search-subtitle">Matching Agenda Topics</div>`;
+      html += agenda.length
+        ? agenda.map((a) => `<div class="search-result"><div><strong>Meeting ${a.meeting_id} • ${a.item_key}</strong></div><div class="meta">${a.section || "agenda"}</div><div class="mention-context">${hl(a.title)}</div></div>`).join("")
+        : `<div class="search-result">No agenda topic matches.</div>`;
+
+      html += `<div class="search-subtitle">Matching Documents</div>`;
+      html += docs.length
+        ? docs.map((d) => `<div class="search-result"><div><strong>Meeting ${d.meeting_id}</strong> <span class="meta">doc ${d.document_id}</span></div><div class="mention-context"><a href="${d.url}" target="_blank" rel="noreferrer">${hl(d.title)}</a></div></div>`).join("")
+        : `<div class="search-result">No document matches.</div>`;
+
+      contentSearchResultsEl.innerHTML = html;
+    }
+
+    async function loadRuntimeDiagnostics() {
+      try {
+        const res = await fetch("/runtime");
+        if (!res.ok) throw new Error(`runtime check failed (${res.status})`);
+        const info = await res.json();
+        const ok = Boolean(info.pypdf_available);
+        runtimePanelEl.innerHTML = `
+          <div><strong>Runtime Diagnostics</strong></div>
+          <div class="${ok ? "runtime-ok" : "runtime-warn"}">pypdf: ${ok ? "available" : "unavailable"}</div>
+          <div class="meta">${info.python_executable || ""}</div>
+        `;
+      } catch (err) {
+        runtimePanelEl.textContent = err.message || "Runtime diagnostics unavailable.";
+      }
     }
 
     async function loadRelatedEntities(entityId, entityLabel) {
@@ -540,17 +680,25 @@
       const q = (entitySearchEl.value || "").trim();
       if (!q) {
         entitySearchResultsEl.innerHTML = "";
+        contentSearchResultsEl.innerHTML = "";
         entityRelatedResultsEl.innerHTML = "";
         return;
       }
       entitySearchBtn.disabled = true;
       try {
-        const res = await fetch(`/entities/search?q=${encodeURIComponent(q)}`);
-        if (!res.ok) throw new Error(`Entity search failed (${res.status})`);
-        const rows = await res.json();
+        const [entityRes, contentRes] = await Promise.all([
+          fetch(`/entities/search?q=${encodeURIComponent(q)}`),
+          fetch(`/search/content?q=${encodeURIComponent(q)}`),
+        ]);
+        if (!entityRes.ok) throw new Error(`Entity search failed (${entityRes.status})`);
+        if (!contentRes.ok) throw new Error(`Content search failed (${contentRes.status})`);
+        const rows = await entityRes.json();
+        const content = await contentRes.json();
         renderEntitySearchResults(rows);
+        renderContentSearchResults(content, q);
       } catch (err) {
         entitySearchResultsEl.innerHTML = `<div class="search-result">${err.message || "Search failed."}</div>`;
+        contentSearchResultsEl.innerHTML = "";
       } finally {
         entitySearchBtn.disabled = false;
       }
@@ -618,6 +766,7 @@
 
     form.addEventListener("submit", runQuery);
     entitySearchBtn.addEventListener("click", searchEntities);
+    loadRuntimeDiagnostics();
     entitySearchEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();

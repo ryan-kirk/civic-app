@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -11,6 +14,8 @@ from app.classifiers.topics import classify_topics
 from app.extractors.zoning import extract_zoning_signals
 from app.schemas import (
     AgendaItemOut,
+    AgendaTopicSearchOut,
+    DocumentSearchOut,
     DocumentOut,
     EntityMentionOut,
     RelatedEntityOut,
@@ -27,6 +32,14 @@ client = CivicWebClient(base_url=settings.civicweb_base_url)
 @router.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@router.get("/runtime")
+async def runtime_info():
+    return {
+        "python_executable": sys.executable,
+        "pypdf_available": bool(importlib.util.find_spec("pypdf")),
+    }
 
 
 @router.get("/meetings")
@@ -169,6 +182,7 @@ def get_meeting_entities(
         summary.mention_count += 1
         summary.mentions.append(
             EntityMentionOut(
+                meeting_id=mention.meeting_id,
                 source_type=mention.source_type,
                 source_id=mention.source_id,
                 agenda_item_id=mention.agenda_item_id,
@@ -219,6 +233,7 @@ def search_entities(
                 mention_count=int(total_mentions),
                 mentions=[
                     EntityMentionOut(
+                        meeting_id=m.meeting_id,
                         source_type=m.source_type,
                         source_id=m.source_id,
                         agenda_item_id=m.agenda_item_id,
@@ -296,3 +311,50 @@ def related_entities(
             )
         )
     return out
+
+
+@router.get("/search/content")
+def search_content(
+    q: str = Query(..., min_length=1),
+    limit: int = Query(default=20, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    term = f"%{normalize_text(q).lower()}%"
+
+    agenda_rows = (
+        db.query(AgendaItem)
+        .filter(func.lower(AgendaItem.title).like(term))
+        .order_by(AgendaItem.meeting_id.desc(), AgendaItem.item_key.asc())
+        .limit(limit)
+        .all()
+    )
+    document_rows = (
+        db.query(Document)
+        .filter(func.lower(Document.title).like(term))
+        .order_by(Document.meeting_id.desc(), Document.document_id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "agenda_topics": [
+            AgendaTopicSearchOut(
+                meeting_id=row.meeting_id,
+                agenda_item_id=row.id,
+                item_key=row.item_key,
+                title=normalize_text(row.title),
+                section=row.section or "",
+            )
+            for row in agenda_rows
+        ],
+        "documents": [
+            DocumentSearchOut(
+                meeting_id=row.meeting_id,
+                document_id=row.document_id,
+                agenda_item_id=row.agenda_item_id,
+                title=normalize_text(row.title),
+                url=row.url,
+            )
+            for row in document_rows
+        ],
+    }

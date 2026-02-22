@@ -37,6 +37,7 @@ class MeetingMinutesMetadataOut(BaseModel):
 
 
 class EntityMentionOut(BaseModel):
+    meeting_id: int
     source_type: str
     source_id: int
     agenda_item_id: Optional[int] = None
@@ -62,6 +63,22 @@ class RelatedEntityOut(BaseModel):
     normalized_value: str
     cooccurrence_count: int
     shared_meeting_count: int
+
+
+class AgendaTopicSearchOut(BaseModel):
+    meeting_id: int
+    agenda_item_id: int
+    item_key: str
+    title: str
+    section: str
+
+
+class DocumentSearchOut(BaseModel):
+    meeting_id: int
+    document_id: int
+    agenda_item_id: Optional[int] = None
+    title: str
+    url: str
 
 
 class MeetingOut(BaseModel):

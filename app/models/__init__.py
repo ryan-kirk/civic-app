@@ -124,3 +124,19 @@ class EntityMention(Base):
 	confidence: Mapped[float] = mapped_column(default=1.0)
 
 	entity = relationship("Entity")
+
+
+class EntityAlias(Base):
+	__tablename__ = "entity_aliases"
+	__table_args__ = (
+		UniqueConstraint("entity_id", "normalized_alias", name="uq_entity_alias"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	alias_text: Mapped[str] = mapped_column(Text, default="")
+	normalized_alias: Mapped[str] = mapped_column(String, index=True)
+	source: Mapped[str] = mapped_column(String, default="derived")
+	confidence: Mapped[float] = mapped_column(default=1.0)
+
+	entity = relationship("Entity")

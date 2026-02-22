@@ -6,7 +6,7 @@ from app.db import Base
 from app.entities import extract_entities_from_text, replace_entity_mentions_for_source
 from app.ingest import ingest_meeting
 from app.main import app, get_db
-from app.models import AgendaItem, Meeting, MeetingMinutesMetadata
+from app.models import AgendaItem, EntityMention, Meeting, MeetingMinutesMetadata
 
 
 def test_meeting_entities_and_search_endpoint(tmp_path):
@@ -138,3 +138,51 @@ def test_ingest_extracts_entities_from_meeting_metadata(monkeypatch, tmp_path):
             assert any(m["source_type"] == "meeting_metadata" for m in date_entity["mentions"])
         finally:
             app.dependency_overrides.clear()
+
+
+def test_person_alias_snowball_matching_from_titled_seed(tmp_path):
+    test_db_path = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{test_db_path}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with TestingSessionLocal() as db:
+        db.add(Meeting(meeting_id=2001, name="Council", date="", time="", location="", type_id=1, video_url=""))
+        db.flush()
+
+        # Seed high-confidence person entity from titled pattern.
+        seed_text = "Mayor Jane Smith called the meeting to order."
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=2001,
+            source_type="meeting_metadata",
+            source_id=2001,
+            context_text=seed_text,
+            entities=extract_entities_from_text(seed_text),
+        )
+        db.flush()
+
+        # Later source has plain name only; alias match should attach the same person.
+        item = AgendaItem(meeting_id=2001, item_key="9.1", section="", title="Discussion with Jane Smith regarding project timeline")
+        db.add(item)
+        db.flush()
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=2001,
+            agenda_item_id=item.id,
+            source_type="agenda_item_title",
+            source_id=item.id,
+            context_text=item.title,
+            entities=extract_entities_from_text(item.title),
+        )
+        db.flush()
+
+        mentions = (
+            db.query(EntityMention)
+            .filter(EntityMention.source_type == "agenda_item_title", EntityMention.source_id == item.id)
+            .all()
+        )
+        person_mentions = [m for m in mentions if m.entity.entity_type == "person"]
+        assert person_mentions
+        assert any(m.mention_text == "Jane Smith" for m in person_mentions)
+        assert any(float(m.confidence) < 1.0 for m in person_mentions)  # alias snowball match

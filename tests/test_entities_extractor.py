@@ -14,3 +14,11 @@ def test_extract_entities_from_text_detects_core_types():
     assert ("address", "10841 douglas avenue") in by_type
     assert ("date", "2026-02-18") in by_type
     assert any(r["entity_type"] == "organization" and "enclave apartments" in r["normalized_value"] for r in rows)
+
+
+def test_extract_entities_from_text_detects_titled_person_low_noise():
+    text = "Mayor Jane Smith and Council Member Robert Jones presented the update."
+    rows = extract_entities_from_text(text)
+
+    people = [r for r in rows if r["entity_type"] == "person"]
+    assert {p["display_value"] for p in people} == {"Jane Smith", "Robert Jones"}

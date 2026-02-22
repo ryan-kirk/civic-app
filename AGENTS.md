@@ -108,6 +108,7 @@ Current API surface:
   - agenda item titles
   - minutes PDF text excerpts
 - Current entity types:
+  - `person` (conservative titled-name extraction + alias snowball matching)
   - `date`
   - `address`
   - `ordinance_number`
@@ -115,6 +116,7 @@ Current API surface:
   - `organization` (e.g., `LLC`, `Inc`, `Company`)
 - Storage tables:
   - `entities` (canonical entity values)
+  - `entity_aliases` (deterministic aliases, used for person snowball matching)
   - `entity_mentions` (source-linked mentions with context)
 
 ## Topic Classification
