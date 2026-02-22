@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CivicWatch Explorer</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1f2421;
+      --muted: #5e645f;
+      --panel: #fffdf8;
+      --accent: #0e7490;
+      --accent-2: #155e75;
+      --line: #d7d2c8;
+      --ok: #0f766e;
+      --warn: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1000px 500px at 10% -10%, #dce8e9 0%, transparent 60%),
+        radial-gradient(900px 450px at 90% -5%, #efe6d5 0%, transparent 60%),
+        var(--bg);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+    .hero { margin-bottom: 18px; }
+    .hero h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: .02em; }
+    .hero p { margin: 8px 0 0; color: var(--muted); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.04);
+    }
+
+    form { display: grid; gap: 12px; }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    label { font-size: .85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      font-size: 0.95rem;
+      background: white;
+    }
+    .col-2 { grid-column: span 2; }
+    .col-1 { grid-column: span 1; }
+    .checks { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .checks label { margin: 0; color: var(--ink); font-size: .9rem; }
+    .checks input { width: auto; margin-right: 6px; }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      padding: 12px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .status {
+      margin-top: 10px;
+      font-size: .92rem;
+      color: var(--muted);
+      min-height: 1.25rem;
+    }
+
+    .summary {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .kpi {
+      background: #f8f6ef;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .kpi .k { color: var(--muted); font-size: .8rem; }
+    .kpi .v { font-weight: 700; font-size: 1.1rem; margin-top: 4px; }
+
+    .results { margin-top: 18px; display: grid; gap: 12px; }
+    .meeting {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 12px;
+    }
+    .meeting h3 { margin: 0 0 4px; font-size: 1rem; }
+    .meta { font-size: .86rem; color: var(--muted); margin-bottom: 8px; }
+    .item {
+      padding: 8px;
+      border: 1px solid #ece7dc;
+      border-radius: 8px;
+      margin-top: 6px;
+      background: #fffcf5;
+    }
+    .topics { font-size: .8rem; color: var(--ok); margin-top: 4px; }
+    .signals { font-size: .8rem; color: var(--warn); margin-top: 2px; }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+      .col-2, .col-1 { grid-column: span 1; }
+      .summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>CivicWatch Explorer</h1>
+      <p>Ingest a meeting range, then filter agenda items by topic.</p>
+    </section>
+
+    <section class="panel">
+      <form id="queryForm">
+        <div class="grid">
+          <div class="col-2">
+            <label for="fromDate">From Date</label>
+            <input id="fromDate" name="fromDate" type="date" required />
+          </div>
+          <div class="col-2">
+            <label for="toDate">To Date</label>
+            <input id="toDate" name="toDate" type="date" required />
+          </div>
+          <div class="col-1">
+            <label for="limit">Limit</label>
+            <input id="limit" name="limit" type="number" min="1" max="1000" value="100" />
+          </div>
+          <div class="col-1">
+            <label for="chunkDays">Chunk Days</label>
+            <input id="chunkDays" name="chunkDays" type="number" min="1" max="90" value="31" />
+          </div>
+          <div class="col-2">
+            <label for="topic">Topic</label>
+            <select id="topic" name="topic">
+              <option value="">All Topics</option>
+              <option value="zoning">zoning</option>
+              <option value="ordinances_general">ordinances_general</option>
+              <option value="public_hearings">public_hearings</option>
+              <option value="contracts_procurement">contracts_procurement</option>
+              <option value="budget_finance">budget_finance</option>
+              <option value="infrastructure_transport">infrastructure_transport</option>
+              <option value="urban_renewal_development">urban_renewal_development</option>
+              <option value="boards_commissions">boards_commissions</option>
+              <option value="licenses_permits">licenses_permits</option>
+              <option value="utilities_franchise">utilities_franchise</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="checks">
+          <label><input id="crawl" type="checkbox" checked /> Crawl Historic Windows</label>
+          <label><input id="storeRaw" type="checkbox" checked /> Store Raw Source Payloads</label>
+        </div>
+
+        <div>
+          <button id="runBtn" type="submit">Run Ingest + Filter</button>
+        </div>
+      </form>
+
+      <div id="status" class="status"></div>
+
+      <div id="summary" class="summary" hidden>
+        <div class="kpi"><div class="k">Discovered</div><div class="v" id="kDiscovered">0</div></div>
+        <div class="kpi"><div class="k">Ingested</div><div class="v" id="kIngested">0</div></div>
+        <div class="kpi"><div class="k">Agenda Items Returned</div><div class="v" id="kItems">0</div></div>
+      </div>
+    </section>
+
+    <section id="results" class="results"></section>
+  </main>
+
+  <script>
+    const form = document.getElementById("queryForm");
+    const runBtn = document.getElementById("runBtn");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+    const summaryEl = document.getElementById("summary");
+
+    const fromDate = document.getElementById("fromDate");
+    const toDate = document.getElementById("toDate");
+    fromDate.value = fromDate.value || "2026-01-01";
+    toDate.value = toDate.value || new Date().toISOString().slice(0, 10);
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? "#b91c1c" : "#5e645f";
+    }
+
+    function renderSignals(signals) {
+      if (!signals) return "";
+      const pairs = Object.entries(signals).filter(([, v]) => v);
+      if (!pairs.length) return "";
+      return `<div class="signals">${pairs.map(([k, v]) => `${k}: ${v}`).join(" | ")}</div>`;
+    }
+
+    function renderItem(item) {
+      return `
+        <div class="item">
+          <strong>${item.item_key}</strong> ${item.title}
+          <div class="topics">topics: ${(item.topics || []).join(", ") || "none"}</div>
+          ${renderSignals(item.zoning_signals)}
+        </div>
+      `;
+    }
+
+    function renderMeeting(meetingId, items) {
+      const title = `Meeting ${meetingId}`;
+      return `
+        <article class="meeting">
+          <h3>${title}</h3>
+          <div class="meta">${items.length} matching agenda item(s)</div>
+          ${items.map(renderItem).join("") || "<div class=\"meta\">No matching agenda items.</div>"}
+        </article>
+      `;
+    }
+
+    async function runQuery(event) {
+      event.preventDefault();
+      runBtn.disabled = true;
+      resultsEl.innerHTML = "";
+      summaryEl.hidden = true;
+
+      const params = new URLSearchParams({
+        from_date: fromDate.value,
+        to_date: toDate.value,
+        limit: document.getElementById("limit").value,
+        crawl: String(document.getElementById("crawl").checked),
+        chunk_days: document.getElementById("chunkDays").value,
+        store_raw: String(document.getElementById("storeRaw").checked),
+      });
+      const topic = document.getElementById("topic").value;
+
+      try {
+        setStatus("Ingesting meetings...");
+        const ingestRes = await fetch(`/ingest/range?${params.toString()}`, { method: "POST" });
+        if (!ingestRes.ok) {
+          throw new Error(`Ingest failed (${ingestRes.status})`);
+        }
+        const ingest = await ingestRes.json();
+
+        const meetingIds = (ingest.results || []).map((r) => r.meeting_id).filter(Boolean);
+        setStatus(`Ingested ${meetingIds.length} meetings. Loading agenda items...`);
+
+        const meetingResults = [];
+        let totalItems = 0;
+        for (const meetingId of meetingIds) {
+          const agendaParams = new URLSearchParams();
+          if (topic) agendaParams.set("topic", topic);
+          const agendaRes = await fetch(`/meetings/${meetingId}/agenda?${agendaParams.toString()}`);
+          if (!agendaRes.ok) continue;
+          const agendaItems = await agendaRes.json();
+          if (agendaItems.length || !topic) {
+            meetingResults.push({ meetingId, agendaItems });
+            totalItems += agendaItems.length;
+          }
+        }
+
+        document.getElementById("kDiscovered").textContent = String(ingest.discovered || 0);
+        document.getElementById("kIngested").textContent = String(ingest.ingested || 0);
+        document.getElementById("kItems").textContent = String(totalItems);
+        summaryEl.hidden = false;
+
+        if (!meetingResults.length) {
+          resultsEl.innerHTML = `<article class="meeting"><div class="meta">No meetings had matching agenda items for this topic.</div></article>`;
+        } else {
+          resultsEl.innerHTML = meetingResults
+            .map((r) => renderMeeting(r.meetingId, r.agendaItems))
+            .join("");
+        }
+
+        setStatus("Completed.");
+      } catch (error) {
+        setStatus(error.message || "Something went wrong.", true);
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener("submit", runQuery);
+  </script>
+</body>
+</html>

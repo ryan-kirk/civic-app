@@ -1,0 +1,41 @@
+[
+  {
+    "item_key": "6.1",
+    "section": "PUBLIC HEARINGS",
+    "title": "Ordinance amending Title 15 Chapter 160 Zoning regulations",
+    "documents": [
+      {
+        "document_id": 148100,
+        "title": "Staff Report - Title 15 Chapter 160 Zoning",
+        "url": "https://example.test/document/148100",
+        "handle": "abc"
+      }
+    ]
+  },
+  {
+    "item_key": "6.2",
+    "section": "CONSENT AGENDA",
+    "title": "Approve minutes of prior meeting",
+    "documents": [
+      {
+        "document_id": 148101,
+        "title": "Council Minutes",
+        "url": "https://example.test/document/148101",
+        "handle": "def"
+      }
+    ]
+  },
+  {
+    "item_key": "6.3",
+    "section": "PUBLIC HEARINGS",
+    "title": "Request to rezone\u2026 C-H to PUD near Douglas Ave",
+    "documents": [
+      {
+        "document_id": 148102,
+        "title": "Rezoning packet",
+        "url": "https://example.test/document/148102",
+        "handle": "ghi"
+      }
+    ]
+  }
+]

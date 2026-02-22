@@ -1,13 +1,26 @@
 [project]
 name = "civic-app"
 version = "0.1.0"
+description = "Parse CivicWeb meetings and surface zoning-related changes via an API."
 requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.30.6",
+  "sqlalchemy==2.0.36",
+  "pydantic==2.10.3",
+  "beautifulsoup4==4.12.3",
+  "lxml==5.3.0",
+  "requests==2.32.3",
+  "python-dateutil==2.9.0.post0",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-select = ["E", "F", "I", "UP", "B"]
-ignore = ["E501"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

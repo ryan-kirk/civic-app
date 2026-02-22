@@ -1,0 +1,32 @@
+[
+  {
+    "text": "Ordinance No. 2026-14 amending Title 15 Chapter 160 Zoning; first reading for 1234 Douglas Ave",
+    "expected": {
+      "ordinance_number": "2026-14",
+      "from_zone": null,
+      "to_zone": null,
+      "reading_stage": "first",
+      "address": "1234 Douglas Ave"
+    }
+  },
+  {
+    "text": "Request to rezone property from C-H to PUD near 86th Street",
+    "expected": {
+      "ordinance_number": null,
+      "from_zone": "C-H",
+      "to_zone": "PUD",
+      "reading_stage": null,
+      "address": null
+    }
+  },
+  {
+    "text": "Rezone C-H to PUD for parcel at 4550 100th Street",
+    "expected": {
+      "ordinance_number": null,
+      "from_zone": "C-H",
+      "to_zone": "PUD",
+      "reading_stage": null,
+      "address": "4550 100th Street"
+    }
+  }
+]

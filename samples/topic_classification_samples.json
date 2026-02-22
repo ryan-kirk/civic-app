@@ -1,0 +1,22 @@
+[
+  {
+    "text": "Ordinance amending Title 15 Chapter 160 Zoning regulations",
+    "expected_topics": ["ordinances_general", "zoning"]
+  },
+  {
+    "text": "Request to rezone property from C-H to PUD near 86th Street",
+    "expected_topics": ["infrastructure_transport", "zoning"]
+  },
+  {
+    "text": "Approve annual budget adjustment and finance report",
+    "expected_topics": ["budget_finance"]
+  },
+  {
+    "text": "Public Hearing and consideration of bids for sidewalk project",
+    "expected_topics": ["contracts_procurement", "infrastructure_transport", "public_hearings"]
+  },
+  {
+    "text": "Development Agreement amendment in urban renewal area",
+    "expected_topics": ["urban_renewal_development"]
+  }
+]
