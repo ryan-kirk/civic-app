@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import difflib
 import importlib.util
+import re
 import sys
 
 from fastapi import APIRouter, Depends, Query
@@ -15,18 +17,25 @@ from app.extractors.zoning import extract_zoning_signals
 from app.schemas import (
     AgendaItemOut,
     AgendaTopicSearchOut,
+    AddressExploreOut,
     DocumentSearchOut,
     DocumentOut,
+    ExplorePopularOut,
+    EntitySuggestOut,
     EntityMentionOut,
     RelatedEntityOut,
     EntitySummaryOut,
     MeetingMinutesMetadataOut,
+    PopularTopicOut,
+    TimelineBucketOut,
     ZoningSignalsOut,
 )
 from app.utils.text import normalize_text
 
 router = APIRouter()
 client = CivicWebClient(base_url=settings.civicweb_base_url)
+KNOWN_CITIES = ["Urbandale", "Des Moines", "Waukee", "Clive", "Windsor Heights", "Johnston"]
+ZIP_REGEX = re.compile(r"\b\d{5}(?:-\d{4})?\b")
 
 
 @router.get("/health")
@@ -40,6 +49,42 @@ async def runtime_info():
         "python_executable": sys.executable,
         "pypdf_available": bool(importlib.util.find_spec("pypdf")),
     }
+
+
+@router.get("/entities/suggest", response_model=list[EntitySuggestOut])
+def suggest_entities(
+    q: str = Query(..., min_length=1),
+    limit: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    needle = normalize_text(q).lower()
+    tokens = [t for t in needle.replace(",", " ").split() if t]
+
+    # Pull a manageable candidate pool, then score in Python for loose matches.
+    candidates = db.query(Entity).order_by(Entity.id.desc()).limit(5000).all()
+    scored: list[tuple[float, Entity]] = []
+    for entity in candidates:
+        text = (entity.display_value or "").lower()
+        if not text:
+            continue
+        ratio = difflib.SequenceMatcher(None, needle, text).ratio()
+        starts = 1.0 if text.startswith(needle) else 0.0
+        contains = 1.0 if needle in text else 0.0
+        token_hits = sum(1 for t in tokens if t in text) / max(len(tokens), 1)
+        score = (starts * 2.0) + (contains * 1.5) + (token_hits * 1.2) + ratio
+        if score >= 0.4:
+            scored.append((score, entity))
+
+    scored.sort(key=lambda x: (-x[0], x[1].display_value.lower()))
+    return [
+        EntitySuggestOut(
+            entity_id=e.id,
+            entity_type=e.entity_type,
+            display_value=e.display_value,
+            score=round(score, 3),
+        )
+        for score, e in scored[:limit]
+    ]
 
 
 @router.get("/meetings")
@@ -249,6 +294,57 @@ def search_entities(
     return out
 
 
+@router.get("/entities/{entity_id}", response_model=EntitySummaryOut)
+def get_entity_detail(
+    entity_id: int,
+    mention_limit: int = Query(default=100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    entity = db.query(Entity).filter(Entity.id == entity_id).one_or_none()
+    if not entity:
+        return EntitySummaryOut(
+            entity_id=entity_id,
+            entity_type="unknown",
+            display_value="",
+            normalized_value="",
+            mention_count=0,
+            mentions=[],
+        )
+    total_mentions = (
+        db.query(func.count(EntityMention.id))
+        .filter(EntityMention.entity_id == entity.id)
+        .scalar()
+        or 0
+    )
+    mentions = (
+        db.query(EntityMention)
+        .filter(EntityMention.entity_id == entity.id)
+        .order_by(EntityMention.meeting_id.desc(), EntityMention.id.desc())
+        .limit(mention_limit)
+        .all()
+    )
+    return EntitySummaryOut(
+        entity_id=entity.id,
+        entity_type=entity.entity_type,
+        display_value=entity.display_value,
+        normalized_value=entity.normalized_value,
+        mention_count=int(total_mentions),
+        mentions=[
+            EntityMentionOut(
+                meeting_id=m.meeting_id,
+                source_type=m.source_type,
+                source_id=m.source_id,
+                agenda_item_id=m.agenda_item_id,
+                document_id=m.document_id,
+                mention_text=normalize_text(m.mention_text),
+                context_text=normalize_text(m.context_text),
+                confidence=float(m.confidence or 0.0),
+            )
+            for m in mentions
+        ],
+    )
+
+
 @router.get("/entities/{entity_id}/related", response_model=list[RelatedEntityOut])
 def related_entities(
     entity_id: int,
@@ -358,3 +454,172 @@ def search_content(
             for row in document_rows
         ],
     }
+
+
+@router.get("/explore/popular", response_model=ExplorePopularOut)
+def explore_popular(
+    db: Session = Depends(get_db),
+    entity_limit: int = Query(default=12, ge=1, le=100),
+    topic_limit: int = Query(default=12, ge=1, le=100),
+):
+    top_entities = (
+        db.query(Entity, func.count(EntityMention.id))
+        .join(EntityMention, EntityMention.entity_id == Entity.id)
+        .group_by(Entity.id)
+        .order_by(func.count(EntityMention.id).desc(), Entity.display_value.asc())
+        .limit(entity_limit)
+        .all()
+    )
+
+    entities_out: list[EntitySummaryOut] = []
+    for entity, count in top_entities:
+        mentions = (
+            db.query(EntityMention)
+            .filter(EntityMention.entity_id == entity.id)
+            .order_by(EntityMention.meeting_id.desc(), EntityMention.id.desc())
+            .limit(3)
+            .all()
+        )
+        entities_out.append(
+            EntitySummaryOut(
+                entity_id=entity.id,
+                entity_type=entity.entity_type,
+                display_value=entity.display_value,
+                normalized_value=entity.normalized_value,
+                mention_count=int(count or 0),
+                mentions=[
+                    EntityMentionOut(
+                        meeting_id=m.meeting_id,
+                        source_type=m.source_type,
+                        source_id=m.source_id,
+                        agenda_item_id=m.agenda_item_id,
+                        document_id=m.document_id,
+                        mention_text=normalize_text(m.mention_text),
+                        context_text=normalize_text(m.context_text),
+                        confidence=float(m.confidence or 0.0),
+                    )
+                    for m in mentions
+                ],
+            )
+        )
+
+    topic_counts: dict[str, int] = {}
+    for row in db.query(AgendaItem).order_by(AgendaItem.id.desc()).limit(5000).all():
+        for topic in classify_topics(row.title or ""):
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+
+    topics_out = [
+        PopularTopicOut(topic=t, count=c)
+        for t, c in sorted(topic_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:topic_limit]
+    ]
+    return ExplorePopularOut(topics=topics_out, entities=entities_out)
+
+
+@router.get("/explore/timeline", response_model=list[TimelineBucketOut])
+def explore_timeline(
+    q: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(Entity, EntityMention)
+        .join(EntityMention, EntityMention.entity_id == Entity.id)
+        .filter(Entity.entity_type == "date")
+    )
+    if q:
+        term = f"%{normalize_text(q).lower()}%"
+        query = query.filter(func.lower(Entity.display_value).like(term) | func.lower(Entity.normalized_value).like(term))
+    rows = query.all()
+
+    buckets: dict[str, dict] = {}
+    for entity, mention in rows:
+        key = entity.normalized_value or entity.display_value
+        if not key:
+            continue
+        b = buckets.setdefault(
+            key,
+            {"date": key, "label": entity.display_value or key, "meeting_ids": set(), "entity_count": 0},
+        )
+        b["meeting_ids"].add(mention.meeting_id)
+        b["entity_count"] += 1
+
+    ranked = sorted(
+        buckets.values(),
+        key=lambda b: (b["date"], b["label"]),
+        reverse=True,
+    )[:limit]
+    return [
+        TimelineBucketOut(
+            date=str(b["date"]),
+            label=str(b["label"]),
+            meeting_ids=sorted(list(b["meeting_ids"]), reverse=True),
+            entity_count=int(b["entity_count"]),
+        )
+        for b in ranked
+    ]
+
+
+@router.get("/explore/locations", response_model=list[AddressExploreOut])
+def explore_locations(
+    q: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(Entity, EntityMention)
+        .join(EntityMention, EntityMention.entity_id == Entity.id)
+        .filter(Entity.entity_type == "address")
+    )
+    if q:
+        term = f"%{normalize_text(q).lower()}%"
+        query = query.filter(func.lower(Entity.display_value).like(term) | func.lower(Entity.normalized_value).like(term))
+    rows = query.all()
+
+    buckets: dict[int, dict] = {}
+    for entity, mention in rows:
+        context = normalize_text(mention.context_text)
+        b = buckets.setdefault(
+            entity.id,
+            {
+                "entity_id": entity.id,
+                "address": entity.display_value,
+                "meeting_ids": set(),
+                "mention_count": 0,
+                "cities": {},
+                "state_hint": "Iowa" if "iowa" in context.lower() else "",
+                "zips": {},
+            },
+        )
+        b["meeting_ids"].add(mention.meeting_id)
+        b["mention_count"] += 1
+        for city in KNOWN_CITIES:
+            if city.lower() in context.lower():
+                b["cities"][city] = b["cities"].get(city, 0) + 1
+        if not b["state_hint"] and "iowa" in context.lower():
+            b["state_hint"] = "Iowa"
+        for z in ZIP_REGEX.findall(context):
+            b["zips"][z] = b["zips"].get(z, 0) + 1
+
+    ranked = sorted(
+        buckets.values(),
+        key=lambda b: (-len(b["meeting_ids"]), -b["mention_count"], b["address"].lower()),
+    )[:limit]
+    return [
+        # Prefer contextual city from mentions; default to Urbandale/Iowa for this deployment.
+        AddressExploreOut(
+            entity_id=int(b["entity_id"]),
+            address=str(b["address"]),
+            city_hint=(sorted(b["cities"].items(), key=lambda kv: (-kv[1], kv[0]))[0][0] if b["cities"] else "Urbandale"),
+            state_hint=(b["state_hint"] or "Iowa"),
+            zip_hint=(sorted(b["zips"].items(), key=lambda kv: (-kv[1], kv[0]))[0][0] if b["zips"] else ""),
+            map_query=(
+                f"{b['address']}, "
+                f"{(sorted(b['cities'].items(), key=lambda kv: (-kv[1], kv[0]))[0][0] if b['cities'] else 'Urbandale')}, "
+                f"{(b['state_hint'] or 'Iowa')}"
+                + (f" {(sorted(b['zips'].items(), key=lambda kv: (-kv[1], kv[0]))[0][0])}" if b["zips"] else "")
+            ),
+            shared_meeting_count=len(b["meeting_ids"]),
+            mention_count=int(b["mention_count"]),
+        )
+        for b in ranked
+    ]

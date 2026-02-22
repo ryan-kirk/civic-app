@@ -186,3 +186,61 @@ def test_person_alias_snowball_matching_from_titled_seed(tmp_path):
         assert person_mentions
         assert any(m.mention_text == "Jane Smith" for m in person_mentions)
         assert any(float(m.confidence) < 1.0 for m in person_mentions)  # alias snowball match
+
+
+def test_person_alias_snowball_does_not_duplicate_direct_person_mention(tmp_path):
+    test_db_path = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{test_db_path}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with TestingSessionLocal() as db:
+        db.add(Meeting(meeting_id=2002, name="Council", date="", time="", location="", type_id=1, video_url=""))
+        db.flush()
+
+        # Seed alias registry for Jane Smith.
+        seed_text = "Mayor Jane Smith called the meeting to order."
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=2002,
+            source_type="meeting_metadata",
+            source_id=2002,
+            context_text=seed_text,
+            entities=extract_entities_from_text(seed_text),
+        )
+        db.flush()
+
+        # This source includes a titled person mention (direct extractor) that also matches alias snowball.
+        minutes = MeetingMinutesMetadata(
+            meeting_id=2002,
+            document_id=555001,
+            title="City Council Minutes - Pdf",
+            url="https://example.test/minutes.pdf",
+            detected_date="2026-02-03",
+            page_count=2,
+            text_excerpt="Mayor Jane Smith welcomed attendees and opened the meeting.",
+            status="ok",
+        )
+        db.add(minutes)
+        db.flush()
+
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=2002,
+            document_id=minutes.document_id,
+            source_type="minutes_excerpt",
+            source_id=minutes.id,
+            context_text=minutes.text_excerpt,
+            entities=extract_entities_from_text(minutes.text_excerpt),
+        )
+        db.commit()
+
+        mentions = (
+            db.query(EntityMention)
+            .filter(EntityMention.source_type == "minutes_excerpt", EntityMention.source_id == minutes.id)
+            .all()
+        )
+        person_mentions = [m for m in mentions if m.entity.entity_type == "person"]
+        assert len(person_mentions) == 1
+        assert person_mentions[0].mention_text == "Jane Smith"
+        assert float(person_mentions[0].confidence) == 1.0

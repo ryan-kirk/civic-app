@@ -10,6 +10,7 @@ DATE_PATTERN = re.compile(
     r"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}\b",
     re.IGNORECASE,
 )
+ZIP_PATTERN = re.compile(r"\b\d{5}(?:-\d{4})?\b")
 ADDRESS_PATTERN = re.compile(
     r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,5}\s+"
     r"(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Way|Terrace|Ter|Place|Pl|Circle|Cir|Parkway|Pkwy)\b",
@@ -20,10 +21,27 @@ RESOLUTION_PATTERN = re.compile(r"\bResolution\s+([A-Z]?\d{2,4}-\d{4})\b", re.IG
 ORG_PATTERN = re.compile(
     r"\b([A-Z][A-Za-z0-9&'.,-]*(?:\s+[A-Z][A-Za-z0-9&'.,-]*){0,7}\s+(?:LLC|Inc\.?|Company|Corp\.?|Corporation))\b"
 )
-PERSON_TITLED_PATTERN = re.compile(
+PERSON_PREFIX_TITLED_PATTERN = re.compile(
     r"\b(?:Mayor|Council\s*Member|Councilmember|Chair|Commissioner|City\s+Manager|Director)\s+"
     r"([A-Z][a-z]+(?:\s+[A-Z]\.)?(?:\s+[A-Z][a-z]+){1,2})\b"
 )
+PERSON_SUFFIX_TITLED_PATTERN = re.compile(
+    r"\b([A-Z][a-z]+(?:\s+[A-Z]\.)?(?:\s+[A-Z][a-z]+){1,2})\s+"
+    r"(?:Mayor|Council\s*Member|Councilmember|Chair|Commissioner|City\s+Manager|Director)\b"
+)
+PERSON_ROLE_TRAIL_WORDS = {
+    "mayor",
+    "councilmember",
+    "council",
+    "member",
+    "city",
+    "manager",
+    "director",
+    "chair",
+    "commissioner",
+    "economic",
+    "library",
+}
 
 
 def _normalize_entity_value(entity_type: str, value: str) -> tuple[str, str]:
@@ -33,6 +51,8 @@ def _normalize_entity_value(entity_type: str, value: str) -> tuple[str, str]:
             return raw, datetime.strptime(raw, "%B %d, %Y").date().isoformat()
         except ValueError:
             return raw, raw.lower()
+    if entity_type == "zip_code":
+        return raw, raw
     if entity_type in {"ordinance_number", "resolution_number"}:
         return raw, raw.upper()
     if entity_type == "address":
@@ -42,6 +62,14 @@ def _normalize_entity_value(entity_type: str, value: str) -> tuple[str, str]:
     if entity_type == "person":
         return raw, re.sub(r"\s+", " ", raw).strip().lower()
     return raw, raw.lower()
+
+
+def _clean_person_name(name: str) -> str:
+    name = normalize_text(name)
+    parts = name.split()
+    while parts and parts[-1].lower().rstrip(".,") in PERSON_ROLE_TRAIL_WORDS:
+        parts.pop()
+    return " ".join(parts)
 
 
 def extract_entities_from_text(text: str) -> list[dict[str, str]]:
@@ -69,6 +97,8 @@ def extract_entities_from_text(text: str) -> list[dict[str, str]]:
 
     for m in DATE_PATTERN.finditer(normalized):
         add("date", m.group(0))
+    for m in ZIP_PATTERN.finditer(normalized):
+        add("zip_code", m.group(0))
 
     for m in ADDRESS_PATTERN.finditer(normalized):
         candidate = m.group(0)
@@ -91,8 +121,14 @@ def extract_entities_from_text(text: str) -> list[dict[str, str]]:
     for m in ORG_PATTERN.finditer(normalized):
         add("organization", m.group(1))
 
-    for m in PERSON_TITLED_PATTERN.finditer(normalized):
-        add("person", m.group(1))
+    for m in PERSON_PREFIX_TITLED_PATTERN.finditer(normalized):
+        person = _clean_person_name(m.group(1))
+        if person.count(" ") >= 1:
+            add("person", person)
+    for m in PERSON_SUFFIX_TITLED_PATTERN.finditer(normalized):
+        person = _clean_person_name(m.group(1))
+        if person.count(" ") >= 1:
+            add("person", person)
 
     return found
 
@@ -158,6 +194,7 @@ def _add_person_alias_mentions(
     context_text: str,
     agenda_item_id: int | None,
     document_id: int | None,
+    existing_keys: set[tuple[int, str]] | None = None,
 ) -> list[EntityMention]:
     text = normalize_text(context_text)
     if not text:
@@ -170,14 +207,17 @@ def _add_person_alias_mentions(
         .all()
     )
     mentions: list[EntityMention] = []
-    existing_keys = {
+    existing_keys = set(existing_keys or set())
+    existing_keys.update(
+        {
         (row.entity_id, normalize_text(row.mention_text).lower())
         for row in (
             db.query(EntityMention)
             .filter(EntityMention.source_type == source_type, EntityMention.source_id == source_id)
             .all()
         )
-    }
+        }
+    )
     for alias, entity in aliases:
         alias_text = normalize_text(alias.alias_text)
         if not alias_text:
@@ -223,6 +263,7 @@ def replace_entity_mentions_for_source(
 
     mentions: list[EntityMention] = []
     context = normalize_text(context_text)[:2000]
+    current_source_keys: set[tuple[int, str]] = set()
     for ent in entities:
         entity = _upsert_entity(
             db,
@@ -230,6 +271,10 @@ def replace_entity_mentions_for_source(
             display_value=ent["display_value"],
             normalized_value=ent["normalized_value"],
         )
+        mention_text = normalize_text(ent["mention_text"])
+        key = (entity.id, mention_text.lower())
+        if key in current_source_keys:
+            continue
         mention = EntityMention(
             entity_id=entity.id,
             meeting_id=meeting_id,
@@ -237,12 +282,13 @@ def replace_entity_mentions_for_source(
             document_id=document_id,
             source_type=source_type,
             source_id=source_id,
-            mention_text=ent["mention_text"],
+            mention_text=mention_text,
             context_text=context,
             confidence=1.0,
         )
         db.add(mention)
         mentions.append(mention)
+        current_source_keys.add(key)
 
     # Second pass: snowball previously confirmed person entities using alias exact matches.
     mentions.extend(
@@ -254,6 +300,7 @@ def replace_entity_mentions_for_source(
             context_text=context,
             agenda_item_id=agenda_item_id,
             document_id=document_id,
+            existing_keys=current_source_keys,
         )
     )
     return mentions

@@ -65,6 +65,13 @@ class RelatedEntityOut(BaseModel):
     shared_meeting_count: int
 
 
+class EntitySuggestOut(BaseModel):
+    entity_id: int
+    entity_type: str
+    display_value: str
+    score: float
+
+
 class AgendaTopicSearchOut(BaseModel):
     meeting_id: int
     agenda_item_id: int
@@ -79,6 +86,34 @@ class DocumentSearchOut(BaseModel):
     agenda_item_id: Optional[int] = None
     title: str
     url: str
+
+
+class TimelineBucketOut(BaseModel):
+    date: str
+    label: str
+    meeting_ids: List[int] = Field(default_factory=list)
+    entity_count: int
+
+
+class AddressExploreOut(BaseModel):
+    entity_id: int
+    address: str
+    city_hint: str
+    state_hint: str
+    zip_hint: str
+    map_query: str
+    shared_meeting_count: int
+    mention_count: int
+
+
+class PopularTopicOut(BaseModel):
+    topic: str
+    count: int
+
+
+class ExplorePopularOut(BaseModel):
+    topics: List[PopularTopicOut] = Field(default_factory=list)
+    entities: List[EntitySummaryOut] = Field(default_factory=list)
 
 
 class MeetingOut(BaseModel):

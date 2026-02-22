@@ -121,6 +121,16 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
                 title=doc.title,
                 url=doc.url,
             )
+            replace_entity_mentions_for_source(
+                db,
+                meeting_id=meeting_id,
+                agenda_item_id=item.id,
+                document_id=doc.document_id,
+                source_type="document_title",
+                source_id=doc.id if getattr(doc, "id", None) is not None else doc.document_id,
+                context_text=doc.title,
+                entities=extract_entities_from_text(doc.title),
+            )
 
     db.flush()
     minutes_rows = (
