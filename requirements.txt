@@ -43,3 +43,6 @@ typing_extensions==4.15.0
 urllib3==2.6.3
 uvicorn==0.41.0
 wcwidth==0.6.0
+sqlalchemy==2.0.36
+pydantic==2.10.3
+python-dateutil==2.9.0.post0
