@@ -111,6 +111,25 @@ class MeetingMinutesMetadata(Base):
 	meeting = relationship("Meeting")
 
 
+class DocumentTextExtraction(Base):
+	__tablename__ = "document_text_extractions"
+	__table_args__ = (
+		UniqueConstraint("meeting_id", "document_id", name="uq_document_text_extraction"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.meeting_id"), index=True)
+	document_id: Mapped[int] = mapped_column(Integer, index=True)
+	title: Mapped[str] = mapped_column(Text, default="")
+	url: Mapped[str] = mapped_column(Text, default="")
+	content_type: Mapped[str] = mapped_column(String, default="")
+	text_excerpt: Mapped[str] = mapped_column(Text, default="")
+	text_length: Mapped[int] = mapped_column(Integer, default=0)
+	status: Mapped[str] = mapped_column(String, default="unknown")
+
+	meeting = relationship("Meeting")
+
+
 class Entity(Base):
 	__tablename__ = "entities"
 	__table_args__ = (

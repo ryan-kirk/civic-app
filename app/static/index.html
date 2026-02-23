@@ -36,12 +36,83 @@
       margin: 0 auto;
       padding: 16px;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto minmax(0, 1fr);
       gap: 12px;
     }
     .hero { margin-bottom: 18px; }
     .hero h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: .02em; }
-    .hero p { margin: 8px 0 0; color: var(--muted); }
+    .hero p { margin: 8px 0 0; color: var(--muted); max-width: 78ch; }
+    .hero-note {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .hero-note span {
+      font-size: .76rem;
+      border: 1px solid #d9e4e8;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(255,255,255,.7);
+      color: #37525c;
+    }
+    .filter-bar {
+      background: rgba(255, 253, 248, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .filter-bar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-bar-title { font-size: .8rem; color: var(--muted); font-weight: 600; }
+    .filter-clear {
+      background: transparent;
+      color: #0b4d5f;
+      border: 0;
+      padding: 0;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filter-clear:hover { text-decoration: underline; }
+    .filter-chip-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-height: 28px;
+      align-items: center;
+    }
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid #c8dfe6;
+      background: #eef7fa;
+      color: #0b4d5f;
+      padding: 3px 9px;
+      font-size: .78rem;
+    }
+    .filter-chip.topic { background: #eef8fb; border-color: #c8dfe6; color: #0b4d5f; }
+    .filter-chip.entity { background: #f2f7ee; border-color: #d5e2c7; color: #36511e; }
+    .filter-chip.meeting { background: #fbf2e8; border-color: #ead3b7; color: #7a4b14; }
+    .filter-chip button {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      padding: 0;
+      font-size: .8rem;
+      line-height: 1;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .filter-empty { color: var(--muted); font-size: .8rem; }
 
     .panel {
       background: var(--panel);
@@ -49,6 +120,47 @@
       border-radius: 12px;
       padding: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,.04);
+    }
+    .top-explorer-controls {
+      padding: 12px 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .top-explorer-controls .entity-panel-header {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+    .top-explorer-controls .controls-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+    }
+    .top-explorer-controls .search-row { margin: 0; }
+    .top-explorer-controls .search-row .search-box { min-width: 0; }
+    .top-explorer-controls .status-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .top-explorer-controls .status-row .status.browse { margin-top: 0; min-width: 220px; }
+    .pane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e7e1d6;
+    }
+    .pane-head h2 {
+      margin: 0;
+      font-size: .95rem;
+      letter-spacing: .02em;
+    }
+    .pane-head .sub {
+      color: var(--muted);
+      font-size: .78rem;
     }
     .workspace {
       display: grid;
@@ -105,6 +217,24 @@
     button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
     .status { margin-top: 10px; font-size: .92rem; color: var(--muted); min-height: 1.25rem; }
+    .status.ingest { margin-top: 10px; }
+    .status-label {
+      margin-top: 10px;
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 700;
+    }
+    .status.browse {
+      margin-top: 2px;
+      padding: 6px 8px;
+      border: 1px solid #e4dfd3;
+      border-radius: 8px;
+      background: #fff;
+      font-size: .82rem;
+      min-height: 0;
+    }
 
     .progress-wrap { margin-top: 8px; }
     .progress-track {
@@ -220,6 +350,7 @@
     .browse-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .browse-actions button { padding: 8px 10px; font-size: .85rem; }
     .browse-list { display: grid; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .browse-list.compact { max-height: 240px; }
     .browse-row {
       border: 1px solid #e8e2d6;
       border-radius: 8px;
@@ -245,6 +376,90 @@
     .browse-row button:hover { text-decoration: underline; }
 
     .results { margin-top: 18px; display: grid; gap: 12px; }
+    .meeting-master-detail {
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+    }
+    .meeting-list-panel,
+    .meeting-detail-panel {
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .meeting-list-panel .browse-list {
+      max-height: 220px;
+      background: transparent;
+    }
+    .meeting-list-row {
+      border: 1px solid #e8e2d6;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+      display: grid;
+      gap: 4px;
+    }
+    .meeting-list-row.active {
+      border-color: #86c7d8;
+      background: #eef8fb;
+      box-shadow: inset 0 0 0 1px #c7e7f0;
+    }
+    .meeting-list-row button {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      text-align: left;
+      color: #0b4d5f;
+      font-weight: 700;
+      font-size: .84rem;
+      cursor: pointer;
+    }
+    .meeting-list-row button:hover { text-decoration: underline; }
+    .meeting-list-stats {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .meeting-list-stats span {
+      font-size: .72rem;
+      color: #4a534f;
+      border: 1px solid #ddd6ca;
+      background: #fffdf7;
+      border-radius: 999px;
+      padding: 2px 7px;
+    }
+    .meeting-detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      border-bottom: 1px solid #e7e1d6;
+      padding-bottom: 6px;
+    }
+    .meeting-detail-head h3 {
+      margin: 0;
+      font-size: .92rem;
+      letter-spacing: .02em;
+    }
+    .meeting-detail-head .sub {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #fbfaf6;
+    }
+    .results-head-title { font-size: .82rem; color: var(--muted); font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+    .results-head-sub { font-size: .8rem; color: #45504b; }
     .meeting {
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -320,21 +535,71 @@
       font-size: .75rem;
       cursor: pointer;
     }
+    .entity-chip.active {
+      border-color: #7ec3d7;
+      background: #dff2f7;
+      color: #0b4d5f;
+      box-shadow: inset 0 0 0 1px #bfe3ed;
+    }
     .search-panel {
       border: 1px solid var(--line);
       border-radius: 10px;
       background: #f8f6ef;
       padding: 10px;
       display: grid;
-      grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto auto auto minmax(0, 1fr);
       gap: 8px;
       height: 100%;
       min-height: 0;
     }
+    .search-panel.controls-moved {
+      display: flex;
+      flex-direction: column;
+      padding-top: 8px;
+    }
+    .search-panel.controls-moved .sidebar-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .entity-panel-header {
+      display: grid;
+      gap: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e7e1d6;
+    }
+    .entity-panel-header .entity-title {
+      margin: 0;
+      font-size: .95rem;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .entity-panel-header .sub {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .lens-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .lens-btn {
+      border: 1px solid #d6ddd1;
+      border-radius: 999px;
+      background: #fff;
+      color: #36403a;
+      padding: 4px 8px;
+      font-size: .74rem;
+      cursor: pointer;
+    }
+    .lens-btn:hover { background: #f5f8f1; }
     .sidebar-scroll {
       min-height: 0;
       overflow-y: auto;
       padding-right: 4px;
+      padding-bottom: 8px;
+      overscroll-behavior: contain;
     }
     .view-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
     .tab-btn {
@@ -382,6 +647,217 @@
     .suggestion-item:hover { background: #f7fbfc; }
     .suggestion-meta { font-size: .74rem; color: var(--muted); margin-top: 2px; }
     .search-results { margin-top: 8px; display: grid; gap: 6px; }
+    .sidebar-section {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: rgba(255,255,255,.65);
+    }
+    .sidebar-section:first-child {
+      margin-top: 0;
+    }
+    .sidebar-section-title {
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      user-select: none;
+    }
+    .sidebar-section-title::after {
+      content: "−";
+      color: #7a847e;
+      font-size: .9rem;
+      line-height: 1;
+    }
+    .sidebar-section.collapsed .sidebar-section-title { margin-bottom: 0; }
+    .sidebar-section.collapsed .sidebar-section-title::after { content: "+"; }
+    .sidebar-section.collapsed > *:not(.sidebar-section-title) { display: none !important; }
+    .sidebar-section.operations {
+      background: transparent;
+      border-color: transparent;
+      padding: 0;
+    }
+    .sidebar-section.operations .sidebar-section-title {
+      padding: 8px;
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: rgba(255,255,255,.65);
+      margin-bottom: 8px;
+    }
+    .sidebar-section.operations #operationsMount > .panel {
+      margin: 0;
+      box-shadow: none;
+      background: rgba(255,255,255,.92);
+    }
+    .sidebar-section.operations #operationsMount .pane-head:first-child { margin-top: 0; }
+    .sidebar-section.operations #operationsMount .pane-head { margin-bottom: 8px; padding-bottom: 6px; }
+    .sidebar-section.operations #operationsMount .pane-head h2 { font-size: .86rem; }
+    .sidebar-section.operations #operationsMount .pane-head .sub { font-size: .74rem; }
+    .sidebar-section.operations #operationsMount .ops-compact-note {
+      font-size: .72rem;
+      color: var(--muted);
+      border: 1px solid #e6dfd2;
+      background: #fbfaf6;
+      border-radius: 8px;
+      padding: 6px 8px;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    .sidebar-section.operations #operationsMount form { gap: 8px; }
+    .sidebar-section.operations #operationsMount .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .sidebar-section.operations #operationsMount .col-2,
+    .sidebar-section.operations #operationsMount .col-1 {
+      grid-column: span 1;
+    }
+    .sidebar-section.operations #operationsMount label { font-size: .74rem; margin-bottom: 2px; }
+    .sidebar-section.operations #operationsMount input,
+    .sidebar-section.operations #operationsMount select {
+      padding: 8px 9px;
+      font-size: .84rem;
+      min-width: 0;
+    }
+    .sidebar-section.operations #operationsMount .hint {
+      display: none;
+    }
+    .sidebar-section.operations #operationsMount .checks {
+      gap: 8px;
+      display: grid;
+      align-items: start;
+    }
+    .sidebar-section.operations #operationsMount .checks label {
+      font-size: .76rem;
+      line-height: 1.2;
+    }
+    .sidebar-section.operations #operationsMount button {
+      padding: 8px 10px;
+      font-size: .8rem;
+    }
+    .sidebar-section.operations #operationsMount .status-label {
+      margin-top: 6px;
+      font-size: .68rem;
+    }
+    .sidebar-section.operations #operationsMount .status.ingest {
+      margin-top: 4px;
+      font-size: .78rem;
+    }
+    #operationsMount .summary { margin-top: 10px; }
+    #operationsMount .summary { grid-template-columns: 1fr; gap: 6px; }
+    #operationsMount .kpi { padding: 8px; }
+    #operationsMount .kpi .v { font-size: .95rem; }
+    #operationsMount .coverage-panel { margin-top: 10px; }
+    #operationsMount .coverage-panel { padding: 8px; gap: 6px; }
+    #operationsMount .coverage-grid { grid-template-columns: 1fr 1fr; gap: 5px; }
+    #operationsMount .coverage-kpi { padding: 5px 6px; }
+    #operationsMount .coverage-kpi .v { font-size: .82rem; }
+    #operationsMount .range-list { max-height: 90px; }
+    #operationsMount .range-row { font-size: .72rem; }
+    #operationsMount .browse-panel { margin-top: 10px; }
+    #operationsMount .browse-panel { padding: 8px; gap: 6px; }
+    #operationsMount .browse-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
+    #operationsMount .browse-actions button { width: 100%; }
+    #operationsMount .browse-list { max-height: 120px; }
+    #operationsMount .browse-row { font-size: .74rem; padding: 6px; }
+    #operationsMount .browse-row .meta { font-size: .72rem; }
+    .entity-context-empty {
+      border: 1px dashed #d7d2c8;
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--muted);
+      font-size: .85rem;
+      background: #fbfaf6;
+    }
+    .context-row {
+      border: 1px solid #e8e2d6;
+      border-radius: 8px;
+      background: #fffdf7;
+      padding: 8px;
+      font-size: .8rem;
+    }
+    .context-row strong {
+      color: #0b4d5f;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+    .context-row .meta { margin-bottom: 4px; }
+    .context-row .mention-context { font-size: .78rem; }
+    .focus-card {
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+    .focus-card-title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: #23312d;
+    }
+    .focus-card-meta {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .focus-card-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .focus-stat {
+      border: 1px solid #dcd5c8;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #fff;
+      font-size: .74rem;
+      color: #4a534f;
+    }
+    .exploration-panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .exploration-panel .exploration-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .exploration-panel .sidebar-section {
+      margin-top: 0;
+      background: #fff;
+    }
+    #leftRelatedMount #relatedEntitiesSection {
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+    #leftRelatedMount #relatedEntitiesSection > .sidebar-section-title {
+      display: none;
+    }
+    .exploration-panel .sidebar-section.collapsed > *:not(.sidebar-section-title) { display: none !important; }
+    .exploration-panel .hint-inline {
+      font-size: .8rem;
+      color: var(--muted);
+      border: 1px dashed #d8d1c4;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fffdf8;
+    }
+    .exploration-panel.minor .pane-head h2 { font-size: .9rem; }
+    .exploration-panel.minor .pane-head .sub { font-size: .77rem; }
     .search-subtitle { margin-top: 10px; font-size: .78rem; color: var(--muted); }
     .search-result {
       border: 1px solid #e2ddd2;
@@ -389,6 +865,14 @@
       border-radius: 8px;
       padding: 8px;
       font-size: .82rem;
+    }
+    .search-result.featured {
+      border-color: #cfe5ea;
+      background: #fbfeff;
+    }
+    .search-result.related {
+      border-color: #e5dfcf;
+      background: #fffdf7;
     }
     .search-result button {
       background: transparent;
@@ -412,6 +896,11 @@
       gap: 2px;
       min-height: 0;
     }
+    #diagnosticsSection .runtime-panel {
+      margin-top: 6px;
+      background: rgba(255,255,255,.92);
+    }
+    .runtime-panel strong { font-size: .78rem; }
     .runtime-panel .meta { margin: 0; overflow-wrap: anywhere; }
     .runtime-ok { color: #0f766e; }
     .runtime-warn { color: #b45309; }
@@ -452,6 +941,7 @@
     @media (max-width: 900px) {
       body { overflow: auto; }
       .wrap { height: auto; min-height: 100vh; display: block; padding: 24px 16px 48px; }
+      .top-explorer-controls .controls-row { grid-template-columns: 1fr; }
       .grid { grid-template-columns: 1fr 1fr; }
       .col-2, .col-1 { grid-column: span 1; }
       .summary { grid-template-columns: 1fr; }
@@ -466,12 +956,38 @@
   <main class="wrap">
     <section class="hero">
       <h1>CivicWatch Explorer</h1>
-      <p>Ingest a meeting range, then filter agenda items by topic.</p>
+      <p>Build historic civic context over time. Start from stored meetings, topics, and entities, then add new meeting ranges only where coverage is missing.</p>
+      <div class="hero-note">
+        <span>Investors: zoning + development signals</span>
+        <span>Parents: schools + facilities changes</span>
+        <span>Citizens: ordinances + enforcement context</span>
+      </div>
+    </section>
+    <section class="filter-bar">
+      <div class="filter-bar-head">
+        <div class="filter-bar-title">Active Global Filters</div>
+        <button id="clearAllFiltersBtn" type="button" class="filter-clear">Clear All</button>
+      </div>
+      <div id="activeFilterChips" class="filter-chip-row"></div>
+      <div class="filter-empty">Filters apply across meeting results and entity discovery.</div>
+    </section>
+    <section id="topExplorerControlsPanel" class="panel top-explorer-controls">
+      <div id="topExplorerControlsMount"></div>
     </section>
 
     <section class="workspace">
       <div class="main-col">
-    <section class="panel">
+    <div class="pane-head">
+      <h2>Entity Context & Meetings</h2>
+      <div class="sub">Entity exploration drives meeting context. Select an entity or meeting to progressively load related civic activity.</div>
+    </div>
+    <div id="operationsPlaceholder" class="related">Operations controls are available in the right pane. Use the Operations section to ingest, browse coverage, and manage cache-aware crawling.</div>
+    <section id="operationsPanel" class="panel">
+      <div id="operationsHead" class="pane-head">
+        <h2>Range Ingest & Coverage</h2>
+        <div class="sub">Use cached discovery when possible; run ingest when you need new coverage.</div>
+      </div>
+      <div class="ops-compact-note">Compact operations mode: use this panel to ingest/browse coverage. Chunk Days controls CivicWeb crawl window size; smaller values are safer for long date ranges.</div>
       <form id="queryForm">
         <div class="grid">
           <div class="col-2">
@@ -525,7 +1041,8 @@
         </div>
       </form>
 
-      <div id="status" class="status"></div>
+      <div class="status-label">Ingest Status</div>
+      <div id="ingestStatus" class="status ingest"></div>
       <div class="progress-wrap" id="progressWrap" hidden>
         <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
       </div>
@@ -557,34 +1074,114 @@
         </div>
       </div>
     </section>
+        <section id="entityContextPanel" class="panel" hidden>
+          <div class="pane-head">
+            <h2>Focus Details</h2>
+            <div id="entityContextSummary" class="sub">No item selected.</div>
+          </div>
+          <div id="focusDetailsCard" class="focus-card"></div>
+          <div class="browse-section">
+            <div class="browse-section-title">Mentions / Evidence</div>
+            <div id="leftEntityMentions" class="browse-list"></div>
+          </div>
+        </section>
+        <section id="relatedEntitiesWorkspacePanel" class="exploration-panel minor">
+          <div class="pane-head">
+            <h2>Related Entities</h2>
+            <div class="sub">Explore nearby people, locations, organizations, and dates connected to the current focus.</div>
+          </div>
+          <div id="leftRelatedEmpty" class="hint-inline">Select an entity to load related entities.</div>
+          <div id="leftRelatedMount" class="exploration-grid"></div>
+        </section>
+        <section id="existingDataWorkspacePanel" class="exploration-panel minor">
+          <div class="pane-head">
+            <h2>Explore Existing Data</h2>
+            <div class="sub">Start from stored topics and meetings before running new ingest jobs. This helps users build context from what is already cached.</div>
+          </div>
+          <div id="leftExistingDataMount" class="exploration-grid"></div>
+        </section>
+        <section id="explorationWorkspacePanel" class="exploration-panel">
+          <div class="pane-head">
+            <h2>Exploration Workspace</h2>
+            <div class="sub">Entity matches, related entities, mentions, and meeting/document context are shown here after you search or select an entity.</div>
+          </div>
+          <div id="leftExplorationEmpty" class="hint-inline">Use the entity search on the right or click a topic/entity chip to load contextual exploration results.</div>
+          <div id="leftExplorationMount" class="exploration-grid"></div>
+        </section>
         <div id="related" class="related" hidden></div>
-        <section id="results" class="results"></section>
+        <div class="results-head">
+          <div class="results-head-title">Meeting Results</div>
+          <div id="resultsContextSummary" class="results-head-sub">Agenda items, documents, minutes metadata, and entities use the active global filters above.</div>
+        </div>
+        <section id="meetingMasterDetail" class="meeting-master-detail">
+          <div class="meeting-list-panel">
+            <div class="browse-section-title">Contextual Meetings</div>
+            <div id="meetingResultsList" class="browse-list"></div>
+          </div>
+          <div class="meeting-detail-panel">
+            <div class="meeting-detail-head">
+              <h3 id="meetingDetailTitle">Selected Meeting Detail</h3>
+              <div id="meetingDetailSub" class="sub">Choose a meeting from the contextual list.</div>
+            </div>
+            <section id="results" class="results"></section>
+          </div>
+        </section>
       </div>
       <aside class="side-col">
         <div class="search-panel sticky">
-          <div class="entity-title">Explore Saved Entities</div>
+          <div id="entityExplorerControlsBlock">
+          <div class="entity-panel-header">
+            <div class="entity-title">Entity & Relationship Explorer</div>
+            <div class="sub">Search people, organizations, addresses, meetings, and documents. Results share filter context with the meeting pane.</div>
+            <div class="lens-row">
+              <button type="button" class="lens-btn" data-quick-topic="zoning">Zoning</button>
+              <button type="button" class="lens-btn" data-quick-query="school">Schools</button>
+              <button type="button" class="lens-btn" data-quick-query="police">Public Safety</button>
+              <button type="button" class="lens-btn" data-quick-query="code enforcement">Enforcement</button>
+              <button type="button" class="lens-btn" data-quick-query="development">Development</button>
+            </div>
+          </div>
           <div class="view-tabs">
             <button id="tabSearch" type="button" class="tab-btn active">Search</button>
             <button id="tabTimeline" type="button" class="tab-btn">Timeline</button>
             <button id="tabMap" type="button" class="tab-btn">Map</button>
           </div>
-          <div class="search-row">
-            <div class="search-box">
-              <input id="entitySearch" type="search" placeholder="Search entities (person, org, address, ordinance, date)..." />
-              <div id="entitySuggestions" class="suggestions" hidden></div>
+          <div class="controls-row">
+            <div>
+              <div class="search-row">
+                <div class="search-box">
+                  <input id="entitySearch" type="search" placeholder="Search entities, meetings, documents..." />
+                  <div id="entitySuggestions" class="suggestions" hidden></div>
+                </div>
+                <button id="entitySearchBtn" type="button">Search Entities</button>
+              </div>
+              <div class="hint">Search sets global filter context. Click results to focus, then explore related entities and meeting evidence.</div>
             </div>
-            <button id="entitySearchBtn" type="button">Search Entities</button>
+            <div class="status-row">
+              <div class="status-label" style="margin-top:0;">Explorer Status</div>
+              <div id="browseStatus" class="status browse">Discovery panel ready.</div>
+            </div>
           </div>
-          <div class="hint">Entity search stays visible while you scroll agenda results. Click a result to load related entities.</div>
-          <div id="runtimePanel" class="runtime-panel">Runtime diagnostics loading...</div>
+          </div>
           <div class="sidebar-scroll">
-            <div id="startupExploreResults" class="search-results"></div>
-            <div id="entitySearchResults" class="search-results"></div>
-            <div id="contentSearchResults" class="search-results"></div>
-            <div id="entityRelatedResults" class="search-results"></div>
-            <div id="entityMentionsResults" class="search-results"></div>
-            <div id="timelineResults" class="search-results" hidden></div>
-            <div id="mapResults" class="search-results" hidden></div>
+            <div class="sidebar-section collapsed" id="diagnosticsSection">
+              <div class="sidebar-section-title">Diagnostics</div>
+              <div id="runtimePanel" class="runtime-panel">Runtime diagnostics loading...</div>
+            </div>
+            <div class="sidebar-section operations collapsed" id="operationsSection">
+              <div class="sidebar-section-title">Operations</div>
+              <div id="operationsMount"></div>
+            </div>
+            <div id="searchSectionsGroup">
+              <div class="sidebar-section" id="popularStartsSection"><div class="sidebar-section-title">Popular Starts</div><div id="startupExploreResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="entityMatchesSection"><div class="sidebar-section-title">Entity Matches</div><div id="entitySearchResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="meetingMatchesSection"><div class="sidebar-section-title">Meeting Matches</div><div id="meetingSearchResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="contentMatchesSection"><div class="sidebar-section-title">Agenda & Document Matches</div><div id="contentSearchResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="relatedEntitiesSection"><div class="sidebar-section-title">Related Entities</div><div id="entityRelatedResults" class="search-results"></div></div>
+              <div class="sidebar-section collapsed" id="mentionsSection"><div class="sidebar-section-title">Mentions</div><div id="entityMentionsResults" class="search-results"></div></div>
+            </div>
+            <div class="sidebar-section" id="timelineSection" hidden><div class="sidebar-section-title">Timeline</div><div id="timelineResults" class="search-results"></div></div>
+            <div class="sidebar-section" id="mapSection" hidden><div class="sidebar-section-title">Map</div><div id="mapResults" class="search-results"></div></div>
           </div>
         </div>
       </aside>
@@ -594,8 +1191,11 @@
   <script>
     const form = document.getElementById("queryForm");
     const runBtn = document.getElementById("runBtn");
-    const statusEl = document.getElementById("status");
+    const ingestStatusEl = document.getElementById("ingestStatus");
     const resultsEl = document.getElementById("results");
+    const meetingResultsListEl = document.getElementById("meetingResultsList");
+    const meetingDetailTitleEl = document.getElementById("meetingDetailTitle");
+    const meetingDetailSubEl = document.getElementById("meetingDetailSub");
     const summaryEl = document.getElementById("summary");
     const relatedEl = document.getElementById("related");
     const progressWrap = document.getElementById("progressWrap");
@@ -604,12 +1204,16 @@
     const entitySearchBtn = document.getElementById("entitySearchBtn");
     const entitySearchResultsEl = document.getElementById("entitySearchResults");
     const contentSearchResultsEl = document.getElementById("contentSearchResults");
+    const meetingSearchResultsEl = document.getElementById("meetingSearchResults");
     const entityRelatedResultsEl = document.getElementById("entityRelatedResults");
     const entityMentionsResultsEl = document.getElementById("entityMentionsResults");
     const startupExploreResultsEl = document.getElementById("startupExploreResults");
     const timelineResultsEl = document.getElementById("timelineResults");
     const mapResultsEl = document.getElementById("mapResults");
+    const timelineSectionEl = document.getElementById("timelineSection");
+    const mapSectionEl = document.getElementById("mapSection");
     const runtimePanelEl = document.getElementById("runtimePanel");
+    const browseStatusEl = document.getElementById("browseStatus");
     const entitySuggestionsEl = document.getElementById("entitySuggestions");
     const tabSearchEl = document.getElementById("tabSearch");
     const tabTimelineEl = document.getElementById("tabTimeline");
@@ -622,6 +1226,33 @@
     const storedMeetingsListEl = document.getElementById("storedMeetingsList");
     const topicBrowserListEl = document.getElementById("topicBrowserList");
     const mainColEl = document.querySelector(".main-col");
+    const operationsPanelEl = document.getElementById("operationsPanel");
+    const operationsHeadEl = document.getElementById("operationsHead");
+    const operationsMountEl = document.getElementById("operationsMount");
+    const operationsPlaceholderEl = document.getElementById("operationsPlaceholder");
+    const existingDataPanelEl = document.getElementById("existingDataPanel");
+    const entityContextPanelEl = document.getElementById("entityContextPanel");
+    const entityContextSummaryEl = document.getElementById("entityContextSummary");
+    const leftEntityMentionsEl = document.getElementById("leftEntityMentions");
+    const leftEntityRelatedEl = document.getElementById("leftEntityRelated");
+    const explorationWorkspacePanelEl = document.getElementById("explorationWorkspacePanel");
+    const leftExplorationMountEl = document.getElementById("leftExplorationMount");
+    const leftExplorationEmptyEl = document.getElementById("leftExplorationEmpty");
+    const entityMatchesSectionEl = document.getElementById("entityMatchesSection");
+    const meetingMatchesSectionEl = document.getElementById("meetingMatchesSection");
+    const contentMatchesSectionEl = document.getElementById("contentMatchesSection");
+    const relatedEntitiesSectionEl = document.getElementById("relatedEntitiesSection");
+    const mentionsSectionEl = document.getElementById("mentionsSection");
+    const resultsContextSummaryEl = document.getElementById("resultsContextSummary");
+    const activeFilterChipsEl = document.getElementById("activeFilterChips");
+    const clearAllFiltersBtn = document.getElementById("clearAllFiltersBtn");
+    const topExplorerControlsMountEl = document.getElementById("topExplorerControlsMount");
+    const entityExplorerControlsBlockEl = document.getElementById("entityExplorerControlsBlock");
+    const focusDetailsCardEl = document.getElementById("focusDetailsCard");
+    const relatedEntitiesWorkspacePanelEl = document.getElementById("relatedEntitiesWorkspacePanel");
+    const leftRelatedMountEl = document.getElementById("leftRelatedMount");
+    const leftRelatedEmptyEl = document.getElementById("leftRelatedEmpty");
+    const leftExistingDataMountEl = document.getElementById("leftExistingDataMount");
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
@@ -635,6 +1266,80 @@
     let suggestTimer = null;
     let coverageTimer = null;
     let selectedStoredMeetingId = null;
+    let selectedContextMeetingId = null;
+    let selectedEntityContext = { entityId: null, label: "", entityType: "" };
+    let selectedMeetingContext = null;
+    let lastEntityMentionsEntity = null;
+    let lastEntityRelatedRows = [];
+    const globalFilters = {
+      topic: "",
+      entityQuery: "",
+      meetingId: null,
+    };
+
+    function mountOperationsPanelInSidebar() {
+      if (!(operationsPanelEl instanceof HTMLElement) || !(operationsMountEl instanceof HTMLElement)) return;
+      if (!operationsMountEl.contains(operationsPanelEl)) {
+        operationsMountEl.appendChild(operationsPanelEl);
+      }
+      if (operationsHeadEl instanceof HTMLElement) operationsHeadEl.hidden = true;
+      if (operationsPlaceholderEl instanceof HTMLElement) operationsPlaceholderEl.hidden = false;
+      syncWorkspaceHeight();
+    }
+
+    function mountExplorerControlsTop() {
+      if (!(topExplorerControlsMountEl instanceof HTMLElement) || !(entityExplorerControlsBlockEl instanceof HTMLElement)) return;
+      if (!topExplorerControlsMountEl.contains(entityExplorerControlsBlockEl)) {
+        topExplorerControlsMountEl.appendChild(entityExplorerControlsBlockEl);
+      }
+      const searchPanel = document.querySelector(".search-panel");
+      if (searchPanel instanceof HTMLElement) searchPanel.classList.add("controls-moved");
+      syncWorkspaceHeight();
+    }
+
+    function mountExplorationSectionsInLeftPane() {
+      if (!(leftExplorationMountEl instanceof HTMLElement)) return;
+      const sections = [
+        entityMatchesSectionEl,
+        meetingMatchesSectionEl,
+        contentMatchesSectionEl,
+        mentionsSectionEl,
+      ];
+      for (const section of sections) {
+        if (!(section instanceof HTMLElement)) continue;
+        if (!leftExplorationMountEl.contains(section)) {
+          leftExplorationMountEl.appendChild(section);
+        }
+      }
+      if (leftRelatedMountEl instanceof HTMLElement && relatedEntitiesSectionEl instanceof HTMLElement) {
+        if (!leftRelatedMountEl.contains(relatedEntitiesSectionEl)) {
+          leftRelatedMountEl.appendChild(relatedEntitiesSectionEl);
+        }
+      }
+      syncWorkspaceHeight();
+    }
+
+    function mountExistingDataPanelInLeftPane() {
+      if (!(leftExistingDataMountEl instanceof HTMLElement) || !(existingDataPanelEl instanceof HTMLElement)) return;
+      if (!leftExistingDataMountEl.contains(existingDataPanelEl)) {
+        leftExistingDataMountEl.appendChild(existingDataPanelEl);
+      }
+      syncWorkspaceHeight();
+    }
+
+    function updateExplorationWorkspaceVisibility() {
+      if (!(leftExplorationEmptyEl instanceof HTMLElement)) return;
+      const hasAny =
+        (entitySearchResultsEl.innerHTML || "").trim() ||
+        (meetingSearchResultsEl.innerHTML || "").trim() ||
+        (contentSearchResultsEl.innerHTML || "").trim() ||
+        (entityMentionsResultsEl.innerHTML || "").trim();
+      leftExplorationEmptyEl.hidden = Boolean(hasAny);
+      if (explorationWorkspacePanelEl instanceof HTMLElement) {
+        explorationWorkspacePanelEl.hidden = false;
+      }
+      syncWorkspaceHeight();
+    }
 
     function setSidebarView(view) {
       activeSidebarView = view;
@@ -647,17 +1352,173 @@
 
       const searchVisible = view === "search";
       entitySearchResultsEl.hidden = !searchVisible;
+      meetingSearchResultsEl.hidden = !searchVisible;
       contentSearchResultsEl.hidden = !searchVisible;
       entityRelatedResultsEl.hidden = !searchVisible;
       entityMentionsResultsEl.hidden = !searchVisible;
       startupExploreResultsEl.hidden = !searchVisible;
-      timelineResultsEl.hidden = view !== "timeline";
-      mapResultsEl.hidden = view !== "map";
+      if (leftExplorationMountEl instanceof HTMLElement && leftExplorationMountEl.contains(entitySearchResultsEl)) {
+        entitySearchResultsEl.hidden = false;
+        meetingSearchResultsEl.hidden = false;
+        contentSearchResultsEl.hidden = false;
+        entityRelatedResultsEl.hidden = false;
+        entityMentionsResultsEl.hidden = false;
+      }
+      timelineSectionEl.hidden = view !== "timeline";
+      mapSectionEl.hidden = view !== "map";
     }
 
-    function setStatus(msg, isError = false) {
-      statusEl.textContent = msg;
-      statusEl.style.color = isError ? "#b91c1c" : "#5e645f";
+    function setIngestStatus(msg, isError = false) {
+      ingestStatusEl.textContent = msg;
+      ingestStatusEl.style.color = isError ? "#b91c1c" : "#5e645f";
+      syncWorkspaceHeight();
+    }
+
+    function setBrowseStatus(msg, isError = false) {
+      browseStatusEl.textContent = msg;
+      browseStatusEl.style.color = isError ? "#b91c1c" : "#5e645f";
+      syncWorkspaceHeight();
+    }
+
+    function renderGlobalFilterChips() {
+      const chips = [];
+      if (globalFilters.topic) {
+        chips.push(`<span class="filter-chip topic">Topic: ${globalFilters.topic}<button type="button" data-remove-filter="topic">x</button></span>`);
+      }
+      if (globalFilters.entityQuery) {
+        chips.push(`<span class="filter-chip entity">Entity: ${globalFilters.entityQuery}<button type="button" data-remove-filter="entityQuery">x</button></span>`);
+      }
+      if (globalFilters.meetingId) {
+        chips.push(`<span class="filter-chip meeting">Meeting: ${globalFilters.meetingId}<button type="button" data-remove-filter="meetingId">x</button></span>`);
+      }
+      activeFilterChipsEl.innerHTML = chips.join("") || `<span class="filter-empty">No filters selected.</span>`;
+      clearAllFiltersBtn.hidden = chips.length === 0;
+      syncWorkspaceHeight();
+    }
+
+    function setGlobalTopicFilter(topic) {
+      globalFilters.topic = (topic || "").trim();
+      topicEl.value = globalFilters.topic;
+      renderGlobalFilterChips();
+    }
+
+    function setGlobalEntityFilter(query) {
+      globalFilters.entityQuery = (query || "").trim();
+      entitySearchEl.value = globalFilters.entityQuery;
+      renderGlobalFilterChips();
+    }
+
+    function setGlobalMeetingFilter(meetingId) {
+      globalFilters.meetingId = meetingId ? Number(meetingId) : null;
+      selectedStoredMeetingId = globalFilters.meetingId;
+      renderGlobalFilterChips();
+      updateResultsContextHeader();
+    }
+
+    function updateResultsContextHeader() {
+      if (!(resultsContextSummaryEl instanceof HTMLElement)) return;
+      const bits = [];
+      if (globalFilters.meetingId) bits.push(`meeting ${globalFilters.meetingId}`);
+      if (globalFilters.entityQuery) bits.push(`entity "${globalFilters.entityQuery}"`);
+      if (globalFilters.topic) bits.push(`topic "${globalFilters.topic}"`);
+      resultsContextSummaryEl.textContent = bits.length
+        ? `Contextual results for ${bits.join(" • ")}. Agenda items, documents, and entities stay synchronized with the shared filter bar.`
+        : "Agenda items, documents, minutes metadata, and entities use the active global filters above.";
+    }
+
+    function setSelectedEntityContext(entity) {
+      selectedMeetingContext = null;
+      selectedEntityContext = {
+        entityId: entity?.entityId ? Number(entity.entityId) : null,
+        label: (entity?.label || "").trim(),
+        entityType: (entity?.entityType || "").trim(),
+      };
+      renderLeftEntityContext();
+      updateResultsContextHeader();
+    }
+
+    function setSelectedMeetingContext(meeting) {
+      selectedMeetingContext = meeting ? {
+        meetingId: Number(meeting.meetingId),
+        name: (meeting.name || "").trim(),
+        location: (meeting.location || "").trim(),
+        time: (meeting.time || "").trim(),
+        agendaItemCount: Number(meeting.agendaItemCount || 0),
+        documentCount: Number(meeting.documentCount || 0),
+        entityCount: Number(meeting.entityCount || 0),
+        minutesCount: Number(meeting.minutesCount || 0),
+      } : null;
+      selectedEntityContext = { entityId: null, label: "", entityType: "" };
+      renderLeftEntityContext();
+      updateResultsContextHeader();
+    }
+
+    function renderLeftEntityContext() {
+      if (!(entityContextPanelEl instanceof HTMLElement)) return;
+      const hasEntity = Boolean(selectedEntityContext.label || (lastEntityMentionsEntity && lastEntityMentionsEntity.display_value));
+      const label = selectedEntityContext.label || lastEntityMentionsEntity?.display_value || "";
+      const entityType = selectedEntityContext.entityType || lastEntityMentionsEntity?.entity_type || "";
+      const hasMeeting = Boolean(selectedMeetingContext && selectedMeetingContext.meetingId);
+
+      if (!hasEntity && !hasMeeting) {
+        entityContextPanelEl.hidden = true;
+        if (focusDetailsCardEl instanceof HTMLElement) focusDetailsCardEl.innerHTML = "";
+        leftEntityMentionsEl.innerHTML = "";
+        if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = true;
+        if (leftRelatedEmptyEl instanceof HTMLElement) leftRelatedEmptyEl.hidden = false;
+        return;
+      }
+
+      entityContextPanelEl.hidden = false;
+      if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = false;
+      if (hasMeeting && selectedMeetingContext) {
+        entityContextSummaryEl.textContent = `Meeting ${selectedMeetingContext.meetingId}`;
+        if (focusDetailsCardEl instanceof HTMLElement) {
+          const title = selectedMeetingContext.name
+            ? `Meeting ${selectedMeetingContext.meetingId} • ${selectedMeetingContext.name}`
+            : `Meeting ${selectedMeetingContext.meetingId}`;
+          const metaBits = [selectedMeetingContext.location, selectedMeetingContext.time].filter(Boolean);
+          const stats = [
+            `agenda: ${selectedMeetingContext.agendaItemCount}`,
+            `docs: ${selectedMeetingContext.documentCount}`,
+            `entities: ${selectedMeetingContext.entityCount}`,
+            `minutes: ${selectedMeetingContext.minutesCount}`,
+          ];
+          focusDetailsCardEl.innerHTML = `
+            <div class="focus-card-title">${title}</div>
+            <div class="focus-card-meta">${metaBits.join(" • ") || "Meeting metadata loaded from stored records / contextual results."}</div>
+            <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${s}</span>`).join("")}</div>
+          `;
+        }
+      } else {
+        entityContextSummaryEl.textContent = entityType ? `${label} (${entityType})` : label;
+        if (focusDetailsCardEl instanceof HTMLElement) {
+          const mentionCount = Number(lastEntityMentionsEntity?.mention_count || 0);
+          const relatedCount = Array.isArray(lastEntityRelatedRows) ? lastEntityRelatedRows.length : 0;
+          const stats = [
+            entityType || "entity",
+            mentionCount ? `mentions: ${mentionCount}` : null,
+            relatedCount ? `related: ${relatedCount}` : null,
+          ].filter(Boolean);
+          focusDetailsCardEl.innerHTML = `
+            <div class="focus-card-title">${label || "Entity"}</div>
+            <div class="focus-card-meta">Entity focus drives contextual meeting and document evidence below.</div>
+            <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${s}</span>`).join("")}</div>
+          `;
+        }
+      }
+
+      const mentions = (lastEntityMentionsEntity?.mentions || []).slice(0, 12);
+      if (!hasEntity || !mentions.length) {
+        leftEntityMentionsEl.classList.remove("compact");
+        leftEntityMentionsEl.innerHTML = `<div class="entity-context-empty">${hasMeeting ? "Meeting focus selected. Select an entity result or mention count to inspect entity evidence." : "Select an entity mention count or result to load mention context."}</div>`;
+      } else {
+        leftEntityMentionsEl.classList.add("compact");
+        leftEntityMentionsEl.innerHTML = mentions.map((m) => (
+          `<div class="context-row"><div class="meta">meeting ${m.meeting_id} • ${m.source_type} • confidence: ${Number(m.confidence || 0).toFixed(2)}</div><div class="mention-context">${m.context_text || m.mention_text || "(no context)"}</div></div>`
+        )).join("");
+      }
+      syncWorkspaceHeight();
     }
 
     function setProgress(processed, discovered) {
@@ -714,21 +1575,41 @@
     function renderStoredMeetingsBrowse(rows) {
       if (!rows || !rows.length) {
         storedMeetingsListEl.innerHTML = `<div class="browse-row">No stored meetings match the current filters.</div>`;
+        syncWorkspaceHeight();
         return;
       }
       storedMeetingsListEl.innerHTML = rows.map((m) => (
-        `<div class="browse-row ${selectedStoredMeetingId === Number(m.meeting_id) ? "active" : ""}"><button type="button" data-open-meeting-id="${m.meeting_id}">Meeting ${m.meeting_id}${m.name ? ` • ${m.name}` : ""}</button><div class="meta">${m.location || "location unknown"} ${m.time ? `• ${m.time}` : ""}</div><div class="meta">agenda: ${m.agenda_item_count} • docs: ${m.document_count} • entities: ${m.entity_count}${m.matched_topic_count ? ` • topic matches: ${m.matched_topic_count}` : ""}</div></div>`
+        `<div class="browse-row ${selectedStoredMeetingId === Number(m.meeting_id) ? "active" : ""}"><button type="button" data-open-meeting-id="${m.meeting_id}" data-meeting-name="${(m.name || "").replace(/"/g, "&quot;")}" data-meeting-location="${(m.location || "").replace(/"/g, "&quot;")}" data-meeting-time="${(m.time || "").replace(/"/g, "&quot;")}" data-meeting-agenda-count="${m.agenda_item_count || 0}" data-meeting-document-count="${m.document_count || 0}" data-meeting-entity-count="${m.entity_count || 0}" data-meeting-minutes-count="${m.minutes_count || 0}">Meeting ${m.meeting_id}${m.name ? ` • ${m.name}` : ""}</button><div class="meta">${m.location || "location unknown"} ${m.time ? `• ${m.time}` : ""}</div><div class="meta">agenda: ${m.agenda_item_count} • docs: ${m.document_count} • entities: ${m.entity_count}${m.matched_topic_count ? ` • topic matches: ${m.matched_topic_count}` : ""}</div></div>`
       )).join("");
+      syncWorkspaceHeight();
     }
 
     function renderTopicBrowser(rows) {
       if (!rows || !rows.length) {
         topicBrowserListEl.innerHTML = `<div class="browse-row">No topics available from stored agenda data yet.</div>`;
+        syncWorkspaceHeight();
         return;
       }
       topicBrowserListEl.innerHTML = rows.map((t) => (
-        `<div class="browse-row"><button type="button" data-topic-browser="${t.topic}">${t.topic}</button><div class="meta">agenda items: ${t.agenda_item_count} • meetings: ${t.meeting_count}${(t.recent_meeting_ids || []).length ? ` • recent: ${(t.recent_meeting_ids || []).join(", ")}` : ""}</div></div>`
+        `<div class="browse-row ${globalFilters.topic === t.topic ? "active" : ""}"><button type="button" data-topic-browser="${t.topic}">${t.topic}</button><div class="meta">agenda items: ${t.agenda_item_count} • meetings: ${t.meeting_count}${(t.recent_meeting_ids || []).length ? ` • recent: ${(t.recent_meeting_ids || []).join(", ")}` : ""}</div></div>`
       )).join("");
+      syncWorkspaceHeight();
+    }
+
+    function renderMeetingSearchResults(rows) {
+      if (!rows || !rows.length) {
+        meetingSearchResultsEl.innerHTML = `<div class="search-subtitle">Matching Meetings</div><div class="search-result">No meeting matches.</div>`;
+        updateExplorationWorkspaceVisibility();
+        syncWorkspaceHeight();
+        return;
+      }
+      meetingSearchResultsEl.innerHTML =
+        `<div class="search-subtitle">Matching Meetings</div>` +
+        rows.map((m) => (
+          `<div class="search-result"><button type="button" data-open-meeting-id="${m.meeting_id}" data-meeting-name="${(m.name || "").replace(/"/g, "&quot;")}" data-meeting-location="${(m.location || "").replace(/"/g, "&quot;")}" data-meeting-time="${(m.time || "").replace(/"/g, "&quot;")}" data-meeting-agenda-count="${m.agenda_item_count || 0}" data-meeting-document-count="${m.document_count || 0}" data-meeting-entity-count="${m.entity_count || 0}" data-meeting-minutes-count="${m.minutes_count || 0}">Meeting ${m.meeting_id}${m.name ? ` • ${m.name}` : ""}</button><div class="meta">${m.location || "location unknown"} ${m.time ? `• ${m.time}` : ""}</div><div class="meta">agenda: ${m.agenda_item_count} • docs: ${m.document_count} • entities: ${m.entity_count}</div></div>`
+        )).join("");
+      updateExplorationWorkspaceVisibility();
+      syncWorkspaceHeight();
     }
 
     function renderSignals(signals) {
@@ -781,7 +1662,7 @@
         <div class="entity-panel">
           <div class="entity-title">Entities in this meeting</div>
           <div class="entity-list">
-            ${top.map((e) => `<button type="button" class="entity-chip" data-entity-query="${e.display_value}">${e.display_value} (${e.entity_type})</button>`).join("")}
+            ${top.map((e) => `<button type="button" class="entity-chip ${globalFilters.entityQuery === e.display_value ? "active" : ""}" data-entity-query="${e.display_value}">${e.display_value} (${e.entity_type})</button>`).join("")}
           </div>
         </div>
       `;
@@ -819,6 +1700,59 @@
           ${items.map((item) => renderItem(item, activeTopic)).join("") || "<div class=\"meta\">No matching agenda items.</div>"}
         </article>
       `;
+    }
+
+    function renderContextualMeetingList(meetingResults, activeTopic) {
+      if (!(meetingResultsListEl instanceof HTMLElement)) return;
+      if (!meetingResults.length) {
+        meetingResultsListEl.innerHTML = `<div class="browse-row">No meetings match the current context.</div>`;
+        return;
+      }
+      meetingResultsListEl.innerHTML = meetingResults.map((r) => {
+        const docCount = (() => {
+          const seen = new Set();
+          for (const item of (r.agendaItems || [])) {
+            for (const d of (item.documents || [])) seen.add(`${d.document_id}:${d.url}`);
+          }
+          return seen.size;
+        })();
+        const minutesCount = (r.minutesMetadata || []).length;
+        const entityCount = (r.entities || []).length;
+        const active = Number(r.meetingId) === Number(selectedContextMeetingId);
+        return `
+          <div class="meeting-list-row ${active ? "active" : ""}">
+            <button type="button" data-select-context-meeting-id="${r.meetingId}">Meeting ${r.meetingId}</button>
+            <div class="meta">${(r.agendaItems || []).length} matching agenda item(s)${activeTopic ? ` for topic "${activeTopic}"` : ""}</div>
+            <div class="meeting-list-stats">
+              <span>agenda: ${(r.agendaItems || []).length}</span>
+              <span>docs: ${docCount}</span>
+              <span>entities: ${entityCount}</span>
+              <span>minutes: ${minutesCount}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSelectedMeetingDetail(meetingResults, activeTopic) {
+      const selected = meetingResults.find((r) => Number(r.meetingId) === Number(selectedContextMeetingId)) || null;
+      if (!(meetingDetailTitleEl instanceof HTMLElement) || !(meetingDetailSubEl instanceof HTMLElement)) return;
+      if (!selected) {
+        meetingDetailTitleEl.textContent = "Selected Meeting Detail";
+        meetingDetailSubEl.textContent = "Choose a meeting from the contextual list.";
+        resultsEl.innerHTML = `<article class="meeting"><div class="meta">No meeting selected.</div></article>`;
+        return;
+      }
+      const agendaCount = (selected.agendaItems || []).length;
+      meetingDetailTitleEl.textContent = `Meeting ${selected.meetingId}`;
+      meetingDetailSubEl.textContent = `${agendaCount} matching agenda item(s)${activeTopic ? ` • topic "${activeTopic}"` : ""}`;
+      resultsEl.innerHTML = renderMeeting(
+        selected.meetingId,
+        selected.agendaItems || [],
+        selected.minutesMetadata || [],
+        selected.entities || [],
+        activeTopic
+      );
     }
 
     function renderRelatedTopics(meetingResults, activeTopic) {
@@ -869,7 +1803,7 @@
         const currentMeeting = progress.current_meeting_id ? ` (meeting ${progress.current_meeting_id})` : "";
         const discoveryBits = progress.discovery_source ? ` • discovery: ${progress.discovery_source}` : "";
         if (job.status === "running" || job.status === "queued") {
-          setStatus(`Ingest progress: ${processed}/${discovered || "?"}${currentMeeting}${discoveryBits}`);
+          setIngestStatus(`Ingest progress: ${processed}/${discovered || "?"}${currentMeeting}${discoveryBits}`);
           await new Promise((resolve) => setTimeout(resolve, 900));
           continue;
         }
@@ -888,7 +1822,7 @@
 
       for (let i = 0; i < meetingIds.length; i += 1) {
         const meetingId = meetingIds[i];
-        setStatus(`Loading agenda ${i + 1}/${meetingIds.length} (meeting ${meetingId})...`);
+        setIngestStatus(`Loading agenda ${i + 1}/${meetingIds.length} (meeting ${meetingId})...`);
 
         const agendaParams = new URLSearchParams();
         if (topic) agendaParams.set("topic", topic);
@@ -920,18 +1854,30 @@
 
     function renderResults(meetingResults, activeTopic) {
       if (!meetingResults.length) {
+        selectedContextMeetingId = null;
+        if (meetingResultsListEl instanceof HTMLElement) {
+          meetingResultsListEl.innerHTML = `<div class="browse-row">No meetings had matching agenda items for this topic.</div>`;
+        }
+        if (meetingDetailTitleEl instanceof HTMLElement) meetingDetailTitleEl.textContent = "Selected Meeting Detail";
+        if (meetingDetailSubEl instanceof HTMLElement) meetingDetailSubEl.textContent = "No matching meetings for the current context.";
         resultsEl.innerHTML = `<article class="meeting"><div class="meta">No meetings had matching agenda items for this topic.</div></article>`;
       } else {
-        resultsEl.innerHTML = meetingResults
-          .map((r) => renderMeeting(r.meetingId, r.agendaItems, r.minutesMetadata || [], r.entities || [], activeTopic))
-          .join("");
+        const hasSelected = meetingResults.some((r) => Number(r.meetingId) === Number(selectedContextMeetingId));
+        if (!hasSelected) {
+          selectedContextMeetingId = Number(globalFilters.meetingId || meetingResults[0].meetingId);
+        }
+        renderContextualMeetingList(meetingResults, activeTopic);
+        renderSelectedMeetingDetail(meetingResults, activeTopic);
       }
       renderRelatedTopics(meetingResults, activeTopic);
+      syncWorkspaceHeight();
     }
 
     function renderEntitySearchResults(rows) {
       if (!rows.length) {
         entitySearchResultsEl.innerHTML = `<div class="search-result">No matching entities found.</div>`;
+        updateExplorationWorkspaceVisibility();
+        syncWorkspaceHeight();
         return;
       }
 
@@ -945,6 +1891,7 @@
       const sourceLabel = (m) => {
         if (m.source_type === "agenda_item_title") return `agenda item ${m.agenda_item_id ?? "?"}`;
         if (m.source_type === "minutes_excerpt") return `minutes doc ${m.document_id ?? "?"}`;
+        if (m.source_type === "document_content") return `document content ${m.document_id ?? "?"}`;
         if (m.source_type === "meeting_metadata") return "meeting metadata";
         return m.source_type;
       };
@@ -963,24 +1910,48 @@
             </div>
           `;
         }).join("");
-        return `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • <a class="meta-link" href="#" data-entity-mentions-id="${row.entity_id}">mentions: ${row.mention_count}</a></span><div class="mention-list">${mentionRows || "<div class='meta'>No mention preview</div>"}</div></div>`;
+        return `<div class="search-result featured"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • <a class="meta-link" href="#" data-entity-mentions-id="${row.entity_id}">mentions: ${row.mention_count}</a></span><div class="mention-list">${mentionRows || "<div class='meta'>No mention preview</div>"}</div></div>`;
       }).join("");
+      updateExplorationWorkspaceVisibility();
+      syncWorkspaceHeight();
     }
 
     function renderEntityRelatedResults(rows, entityLabel) {
+      lastEntityRelatedRows = rows || [];
+      if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = false;
+      if (leftRelatedEmptyEl instanceof HTMLElement) {
+        leftRelatedEmptyEl.hidden = Boolean((rows || []).length);
+      }
       if (!rows.length) {
         entityRelatedResultsEl.innerHTML = `<div class="search-result">No related entities found for ${entityLabel}.</div>`;
+        renderLeftEntityContext();
+        updateExplorationWorkspaceVisibility();
+        syncWorkspaceHeight();
         return;
       }
       entityRelatedResultsEl.innerHTML = `<div class="entity-title">Related to ${entityLabel}</div>` + rows.map((row) => (
-        `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count} • <a class="meta-link" href="#" data-entity-mentions-id="${row.entity_id}">view mentions</a></span></div>`
+        `<div class="search-result related"><button type="button" data-entity-id="${row.entity_id}">${row.display_value}</button> <span class="meta">(${row.entity_type}) • shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count} • <a class="meta-link" href="#" data-entity-mentions-id="${row.entity_id}">view mentions</a></span></div>`
       )).join("");
+      renderLeftEntityContext();
+      updateExplorationWorkspaceVisibility();
+      syncWorkspaceHeight();
     }
 
     function renderEntityMentionsDetail(entity) {
+      lastEntityMentionsEntity = entity || null;
+      if (entity?.entity_id || entity?.display_value) {
+        setSelectedEntityContext({
+          entityId: entity.entity_id,
+          label: entity.display_value,
+          entityType: entity.entity_type || "",
+        });
+      }
       const rows = entity?.mentions || [];
       if (!entity || !rows.length) {
         entityMentionsResultsEl.innerHTML = `<div class="search-result">No entity mentions available.</div>`;
+        renderLeftEntityContext();
+        updateExplorationWorkspaceVisibility();
+        syncWorkspaceHeight();
         return;
       }
       entityMentionsResultsEl.innerHTML =
@@ -988,6 +1959,9 @@
         rows.map((m) => (
           `<div class="search-result"><div class="mention-meta"><span>meeting ${m.meeting_id}</span><span>${m.source_type}</span><span>confidence: ${Number(m.confidence || 0).toFixed(2)}</span></div><div class="mention-context">${m.context_text || m.mention_text}</div></div>`
         )).join("");
+      renderLeftEntityContext();
+      updateExplorationWorkspaceVisibility();
+      syncWorkspaceHeight();
     }
 
     function renderStartupExplore(payload) {
@@ -1001,34 +1975,39 @@
         <div class="startup-panel">
           <div class="entity-title">Popular Topics</div>
           <div class="entity-list">
-            ${topics.map((t) => `<button type="button" class="entity-chip" data-topic="${t.topic}">${t.topic} (${t.count})</button>`).join("")}
+            ${topics.map((t) => `<button type="button" class="entity-chip ${globalFilters.topic === t.topic ? "active" : ""}" data-topic="${t.topic}">${t.topic} (${t.count})</button>`).join("")}
           </div>
           <div class="entity-title" style="margin-top:10px;">Popular Entities</div>
           <div class="entity-list">
-            ${entities.map((e) => `<button type="button" class="entity-chip" data-entity-id="${e.entity_id}" data-entity-seed="${e.display_value}">${e.display_value}</button>`).join("")}
+            ${entities.map((e) => `<button type="button" class="entity-chip ${globalFilters.entityQuery === e.display_value ? "active" : ""}" data-entity-id="${e.entity_id}" data-entity-seed="${e.display_value}">${e.display_value}</button>`).join("")}
           </div>
         </div>
       `;
+      syncWorkspaceHeight();
     }
 
     function renderTimelineResults(rows) {
       if (!rows.length) {
         timelineResultsEl.innerHTML = `<div class="search-result">No timeline events found.</div>`;
+        syncWorkspaceHeight();
         return;
       }
       timelineResultsEl.innerHTML = `<div class="search-subtitle">Timeline (date entities)</div>` + rows.map((row) => (
         `<div class="search-result"><div><strong>${row.label}</strong></div><div class="meta">normalized date: ${row.date} • meetings: ${row.meeting_ids.join(", ")} • mentions: ${row.entity_count}</div></div>`
       )).join("");
+      syncWorkspaceHeight();
     }
 
     function renderMapResults(rows) {
       if (!rows.length) {
         mapResultsEl.innerHTML = `<div class="search-result">No address entities found.</div>`;
+        syncWorkspaceHeight();
         return;
       }
       mapResultsEl.innerHTML = `<div class="search-subtitle">Map View (address entities; external map links)</div>` + rows.map((row) => (
         `<div class="search-result"><button type="button" data-entity-id="${row.entity_id}">${row.address}</button> <span class="meta">(address)</span><div class="meta">city: ${row.city_hint} • state: ${row.state_hint} • shared meetings: ${row.shared_meeting_count} • mentions: ${row.mention_count}</div><a class="map-link" target="_blank" rel="noreferrer" href="https://www.openstreetmap.org/search?query=${encodeURIComponent(row.map_query)}">Open in OpenStreetMap</a></div>`
       )).join("");
+      syncWorkspaceHeight();
     }
 
     async function loadTimelineView() {
@@ -1100,6 +2079,8 @@
         : `<div class="search-result">No document matches.</div>`;
 
       contentSearchResultsEl.innerHTML = html;
+      updateExplorationWorkspaceVisibility();
+      syncWorkspaceHeight();
     }
 
     async function loadRuntimeDiagnostics() {
@@ -1149,7 +2130,7 @@
     async function loadStoredMeetingsBrowse() {
       browseStoredMeetingsBtn.disabled = true;
       storedMeetingsListEl.innerHTML = `<div class="browse-row">Loading stored meetings...</div>`;
-      setStatus("Loading stored meetings from local database...");
+      setBrowseStatus("Loading stored meetings from local database...");
       try {
         const params = new URLSearchParams({
           limit: "25",
@@ -1158,13 +2139,15 @@
         });
         const topic = (topicEl.value || "").trim();
         if (topic) params.set("topic", topic);
+        const q = (globalFilters.entityQuery || "").trim();
+        if (q) params.set("q", q);
         const res = await fetch(`/stored/meetings?${params.toString()}`);
         if (!res.ok) throw new Error(`stored meetings load failed (${res.status})`);
         renderStoredMeetingsBrowse(await res.json());
-        setStatus("Loaded stored meetings from local database.");
+        setBrowseStatus("Loaded stored meetings from local database.");
       } catch (err) {
         storedMeetingsListEl.innerHTML = `<div class="browse-row">${err.message || "Unable to load stored meetings."}</div>`;
-        setStatus(err.message || "Unable to load stored meetings.", true);
+        setBrowseStatus(err.message || "Unable to load stored meetings.", true);
       } finally {
         browseStoredMeetingsBtn.disabled = false;
       }
@@ -1182,11 +2165,25 @@
       }
     }
 
-    async function openStoredMeeting(meetingId) {
+    async function openStoredMeeting(meetingId, meetingMeta = {}, opts = {}) {
+      const { focusMeeting = true } = opts;
       runBtn.disabled = true;
       const meetingNum = Number(meetingId);
-      selectedStoredMeetingId = Number.isFinite(meetingNum) ? meetingNum : null;
-      setStatus(`Loading stored meeting ${meetingId}...`);
+      selectedContextMeetingId = meetingNum;
+      setGlobalMeetingFilter(Number.isFinite(meetingNum) ? meetingNum : null);
+      if (focusMeeting) {
+        setSelectedMeetingContext({
+          meetingId: meetingNum,
+          name: meetingMeta.name || "",
+          location: meetingMeta.location || "",
+          time: meetingMeta.time || "",
+          agendaItemCount: meetingMeta.agendaItemCount || 0,
+          documentCount: meetingMeta.documentCount || 0,
+          entityCount: meetingMeta.entityCount || 0,
+          minutesCount: meetingMeta.minutesCount || 0,
+        });
+      }
+      setBrowseStatus(`Loading stored meeting ${meetingId}...`);
       for (const row of storedMeetingsListEl.querySelectorAll(".browse-row")) {
         row.classList.remove("active");
       }
@@ -1198,14 +2195,33 @@
         const topic = (topicEl.value || "").trim();
         const loaded = await loadAgendaForMeetings([meetingNum], topic);
         lastMeetingResults = loaded.meetingResults;
+        const loadedMeeting = loaded.meetingResults[0];
+        if (loadedMeeting && focusMeeting) {
+          setSelectedMeetingContext({
+            meetingId: meetingNum,
+            name: meetingMeta.name || "",
+            location: meetingMeta.location || "",
+            time: meetingMeta.time || "",
+            agendaItemCount: loadedMeeting.agendaItems?.length || 0,
+            documentCount: (() => {
+              const seen = new Set();
+              for (const item of (loadedMeeting.agendaItems || [])) {
+                for (const d of (item.documents || [])) seen.add(`${d.document_id}:${d.url}`);
+              }
+              return seen.size;
+            })(),
+            entityCount: (loadedMeeting.entities || []).length || 0,
+            minutesCount: (loadedMeeting.minutesMetadata || []).length || 0,
+          });
+        }
         renderResults(lastMeetingResults, topic);
         document.getElementById("kItems").textContent = String(loaded.totalItems);
         summaryEl.hidden = false;
         if (mainColEl instanceof HTMLElement) mainColEl.scrollTop = 0;
         void loadStoredMeetingsBrowse();
-        setStatus(`Loaded stored meeting ${meetingId}.`);
+        setBrowseStatus(`Loaded stored meeting ${meetingId}.`);
       } catch (err) {
-        setStatus(err.message || "Unable to load stored meeting.", true);
+        setBrowseStatus(err.message || "Unable to load stored meeting.", true);
       } finally {
         runBtn.disabled = false;
       }
@@ -1226,9 +2242,12 @@
         const res = await fetch(`/entities/${entityId}/related?limit=15`);
         if (!res.ok) throw new Error(`Related lookup failed (${res.status})`);
         const rows = await res.json();
+        setSelectedEntityContext({ entityId, label: entityLabel });
         renderEntityRelatedResults(rows, entityLabel);
       } catch (err) {
         entityRelatedResultsEl.innerHTML = `<div class="search-result">${err.message || "Related lookup failed."}</div>`;
+        lastEntityRelatedRows = [];
+        renderLeftEntityContext();
       }
     }
 
@@ -1255,33 +2274,70 @@
       workspace.style.height = `${height}px`;
     }
 
-    async function searchEntities() {
+    async function searchEntities(options = {}) {
+      const { focusFirstMeeting = false } = options;
       const q = (entitySearchEl.value || "").trim();
       setSidebarView("search");
       if (!q) {
         entitySearchResultsEl.innerHTML = "";
+        meetingSearchResultsEl.innerHTML = "";
         contentSearchResultsEl.innerHTML = "";
         entityRelatedResultsEl.innerHTML = "";
         entityMentionsResultsEl.innerHTML = "";
+        lastEntityMentionsEntity = null;
+        lastEntityRelatedRows = [];
+        setSelectedEntityContext({ entityId: null, label: "", entityType: "" });
+        setGlobalEntityFilter("");
+        void loadStoredMeetingsBrowse();
+        setBrowseStatus("Cleared entity search filter.");
         renderSuggestions([]);
+        updateExplorationWorkspaceVisibility();
         return;
       }
       renderSuggestions([]);
+      setGlobalEntityFilter(q);
+      setSelectedEntityContext({ entityId: null, label: q, entityType: "" });
+      setBrowseStatus(`Searching entities and meetings for "${q}"...`);
       entitySearchBtn.disabled = true;
       try {
-        const [entityRes, contentRes] = await Promise.all([
+        const [entityRes, meetingRes, contentRes] = await Promise.all([
           fetch(`/entities/search?q=${encodeURIComponent(q)}`),
+          fetch(`/stored/meetings?q=${encodeURIComponent(q)}&limit=10`),
           fetch(`/search/content?q=${encodeURIComponent(q)}`),
         ]);
         if (!entityRes.ok) throw new Error(`Entity search failed (${entityRes.status})`);
+        if (!meetingRes.ok) throw new Error(`Meeting search failed (${meetingRes.status})`);
         if (!contentRes.ok) throw new Error(`Content search failed (${contentRes.status})`);
         const rows = await entityRes.json();
+        const meetingRows = await meetingRes.json();
         const content = await contentRes.json();
         renderEntitySearchResults(rows);
+        renderMeetingSearchResults(meetingRows);
         renderContentSearchResults(content, q);
+        if (focusFirstMeeting && meetingRows.length) {
+          const first = meetingRows[0];
+          await openStoredMeeting(first.meeting_id, {
+            name: first.name,
+            location: first.location,
+            time: first.time,
+            agendaItemCount: first.agenda_item_count,
+            documentCount: first.document_count,
+            entityCount: first.entity_count,
+            minutesCount: first.minutes_count,
+          }, { focusMeeting: false });
+        } else {
+          void loadStoredMeetingsBrowse();
+        }
+        setBrowseStatus(`Search complete for "${q}".`);
       } catch (err) {
         entitySearchResultsEl.innerHTML = `<div class="search-result">${err.message || "Search failed."}</div>`;
+        meetingSearchResultsEl.innerHTML = "";
         contentSearchResultsEl.innerHTML = "";
+        lastEntityRelatedRows = [];
+        lastEntityMentionsEntity = null;
+        renderLeftEntityContext();
+        updateExplorationWorkspaceVisibility();
+        setBrowseStatus(err.message || "Search failed.", true);
       } finally {
         entitySearchBtn.disabled = false;
       }
@@ -1290,6 +2346,7 @@
     async function runQuery(event) {
       event.preventDefault();
       runBtn.disabled = true;
+      selectedContextMeetingId = null;
       resultsEl.innerHTML = "";
       summaryEl.hidden = true;
       relatedEl.hidden = true;
@@ -1310,7 +2367,7 @@
       const topic = topicEl.value;
 
       try {
-        setStatus("Starting ingest job...");
+        setIngestStatus("Starting ingest job...");
         const job = await startIngestJob(params);
         const ingest = await pollJob(job.job_id);
 
@@ -1325,14 +2382,15 @@
         lastMeetingResults = loaded.meetingResults;
         lastIngestSummary = ingest;
 
+        setGlobalTopicFilter(topic || "");
         renderResults(lastMeetingResults, topic);
         await loadRangeCacheStatus();
         await loadCoverageSummary();
         await loadStoredMeetingsBrowse();
         await loadTopicBrowser();
-        setStatus("Completed.");
+        setIngestStatus("Completed.");
       } catch (error) {
-        setStatus(error.message || "Something went wrong.", true);
+        setIngestStatus(error.message || "Something went wrong.", true);
       } finally {
         runBtn.disabled = false;
       }
@@ -1342,12 +2400,16 @@
       if (!lastIngestSummary) return;
       runBtn.disabled = true;
       try {
+        selectedContextMeetingId = null;
         const meetingIds = (lastIngestSummary.results || []).map((r) => r.meeting_id).filter(Boolean);
         const loaded = await loadAgendaForMeetings(meetingIds, topic);
         lastMeetingResults = loaded.meetingResults;
         document.getElementById("kItems").textContent = String(loaded.totalItems);
         renderResults(lastMeetingResults, topic);
-        setStatus(`Filtered by topic: ${topic || "all"}.`);
+        setGlobalTopicFilter(topic || "");
+        void loadStoredMeetingsBrowse();
+        void loadTopicBrowser();
+        setBrowseStatus(`Filtered by topic: ${topic || "all"}.`);
       } finally {
         runBtn.disabled = false;
       }
@@ -1355,6 +2417,24 @@
 
     form.addEventListener("submit", runQuery);
     entitySearchBtn.addEventListener("click", searchEntities);
+    clearAllFiltersBtn.addEventListener("click", async () => {
+      setGlobalTopicFilter("");
+      setGlobalEntityFilter("");
+      setGlobalMeetingFilter(null);
+      selectedMeetingContext = null;
+      selectedContextMeetingId = null;
+      setSelectedEntityContext({ entityId: null, label: "", entityType: "" });
+      topicEl.value = "";
+      entitySearchEl.value = "";
+      renderSuggestions([]);
+      meetingSearchResultsEl.innerHTML = "";
+      if (lastIngestSummary) {
+        await rerunTopicOnly("");
+      } else {
+        void loadStoredMeetingsBrowse();
+        void loadTopicBrowser();
+      }
+    });
     tabSearchEl.addEventListener("click", () => setSidebarView("search"));
     tabTimelineEl.addEventListener("click", async () => {
       setSidebarView("timeline");
@@ -1370,8 +2450,27 @@
     loadRangeCacheStatus();
     loadStoredMeetingsBrowse();
     loadTopicBrowser();
+    renderGlobalFilterChips();
+    updateResultsContextHeader();
+    renderLeftEntityContext();
+    mountExplorerControlsTop();
+    mountExistingDataPanelInLeftPane();
+    mountExplorationSectionsInLeftPane();
+    updateExplorationWorkspaceVisibility();
     setSidebarView("search");
+    mountOperationsPanelInSidebar();
     syncWorkspaceHeight();
+    window.addEventListener("load", syncWorkspaceHeight);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => syncWorkspaceHeight()).catch(() => {});
+    }
+    if (typeof ResizeObserver !== "undefined") {
+      const layoutResizeObserver = new ResizeObserver(() => syncWorkspaceHeight());
+      const heroEl = document.querySelector(".hero");
+      const filterBarEl = document.querySelector(".filter-bar");
+      if (heroEl instanceof HTMLElement) layoutResizeObserver.observe(heroEl);
+      if (filterBarEl instanceof HTMLElement) layoutResizeObserver.observe(filterBarEl);
+    }
     window.addEventListener("resize", syncWorkspaceHeight);
     entitySearchEl.addEventListener("input", () => {
       if (suggestTimer) clearTimeout(suggestTimer);
@@ -1399,10 +2498,42 @@
     document.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      const titleEl = target.closest(".sidebar-section-title");
+      if (!(titleEl instanceof HTMLElement)) return;
+      const sectionEl = titleEl.closest(".sidebar-section");
+      if (!(sectionEl instanceof HTMLElement)) return;
+      sectionEl.classList.toggle("collapsed");
+      syncWorkspaceHeight();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const lensBtn = target.closest("[data-quick-topic], [data-quick-query]");
+      if (!(lensBtn instanceof HTMLElement)) return;
+      const quickTopic = lensBtn.dataset.quickTopic || "";
+      const quickQuery = lensBtn.dataset.quickQuery || "";
+      if (quickTopic) {
+        setGlobalTopicFilter(quickTopic);
+        void loadTopicBrowser();
+        void loadStoredMeetingsBrowse();
+        if (lastIngestSummary) void rerunTopicOnly(quickTopic);
+      }
+      if (quickQuery) {
+        entitySearchEl.value = quickQuery;
+        setGlobalEntityFilter(quickQuery);
+        void searchEntities({ focusFirstMeeting: true });
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
       if (!target.classList.contains("chip")) return;
 
       const topic = target.dataset.topic || "";
-      topicEl.value = topic;
+      setGlobalTopicFilter(topic);
+      updateResultsContextHeader();
       rerunTopicOnly(topic);
     });
 
@@ -1414,7 +2545,7 @@
         const text = suggestion.dataset.suggestText || suggestion.textContent || "";
         entitySearchEl.value = text.trim();
         renderSuggestions([]);
-        searchEntities();
+        searchEntities({ focusFirstMeeting: true });
         return;
       }
     });
@@ -1423,9 +2554,10 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (!target.classList.contains("entity-chip")) return;
+      if (target.dataset.entityId) return;
       const query = target.dataset.entityQuery || "";
-      entitySearchEl.value = query;
-      searchEntities();
+      setGlobalEntityFilter(query);
+      void searchEntities({ focusFirstMeeting: true });
     });
 
     document.addEventListener("click", (event) => {
@@ -1437,11 +2569,13 @@
       const label = button.textContent || "entity";
       if (!entityId) return;
       if (button.dataset.entitySeed || label) {
-        entitySearchEl.value = (button.dataset.entitySeed || label).trim();
+        setGlobalEntityFilter((button.dataset.entitySeed || label).trim());
       }
       setSidebarView("search");
-      searchEntities();
-      loadRelatedEntities(entityId, label);
+      void (async () => {
+        await searchEntities({ focusFirstMeeting: true });
+        await loadRelatedEntities(entityId, label);
+      })();
     });
 
     document.addEventListener("click", (event) => {
@@ -1466,9 +2600,43 @@
     document.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-select-context-meeting-id]");
+      if (!(button instanceof HTMLElement)) return;
+      const meetingId = Number(button.dataset.selectContextMeetingId || 0);
+      if (!Number.isFinite(meetingId) || !meetingId) return;
+      selectedContextMeetingId = meetingId;
+      setGlobalMeetingFilter(meetingId);
+      const row = (lastMeetingResults || []).find((r) => Number(r.meetingId) === meetingId);
+      if (row) {
+        const seenDocs = new Set();
+        for (const item of (row.agendaItems || [])) {
+          for (const d of (item.documents || [])) seenDocs.add(`${d.document_id}:${d.url}`);
+        }
+        setSelectedMeetingContext({
+          meetingId,
+          agendaItemCount: (row.agendaItems || []).length,
+          documentCount: seenDocs.size,
+          entityCount: (row.entities || []).length,
+          minutesCount: (row.minutesMetadata || []).length,
+        });
+      }
+      renderResults(lastMeetingResults || [], topicEl.value || "");
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
       const button = target.closest("[data-open-meeting-id]");
       if (!(button instanceof HTMLElement)) return;
-      openStoredMeeting(button.dataset.openMeetingId);
+      openStoredMeeting(button.dataset.openMeetingId, {
+        name: button.dataset.meetingName || "",
+        location: button.dataset.meetingLocation || "",
+        time: button.dataset.meetingTime || "",
+        agendaItemCount: Number(button.dataset.meetingAgendaCount || 0),
+        documentCount: Number(button.dataset.meetingDocumentCount || 0),
+        entityCount: Number(button.dataset.meetingEntityCount || 0),
+        minutesCount: Number(button.dataset.meetingMinutesCount || 0),
+      });
     });
 
     document.addEventListener("click", (event) => {
@@ -1476,9 +2644,10 @@
       if (!(target instanceof HTMLElement)) return;
       const button = target.closest("[data-topic-browser]");
       if (!(button instanceof HTMLElement)) return;
-      topicEl.value = button.dataset.topicBrowser || "";
-      rerunTopicOnly(topicEl.value);
-      loadStoredMeetingsBrowse();
+      const topic = button.dataset.topicBrowser || "";
+      setGlobalTopicFilter(topic);
+      rerunTopicOnly(topic);
+      void loadStoredMeetingsBrowse();
     });
 
     document.addEventListener("click", (event) => {
@@ -1491,6 +2660,42 @@
       document.getElementById("chunkDays").value = button.dataset.rangeChunk || document.getElementById("chunkDays").value;
       document.getElementById("crawl").checked = (button.dataset.rangeCrawl || "true") === "true";
       loadRangeCacheStatus();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const removeBtn = target.closest("[data-remove-filter]");
+      if (!(removeBtn instanceof HTMLElement)) return;
+      const key = removeBtn.dataset.removeFilter;
+      if (key === "topic") {
+        setGlobalTopicFilter("");
+        updateResultsContextHeader();
+        if (lastIngestSummary) {
+          void rerunTopicOnly("");
+        } else {
+          void loadStoredMeetingsBrowse();
+          void loadTopicBrowser();
+        }
+        return;
+      }
+      if (key === "entityQuery") {
+        setGlobalEntityFilter("");
+        setSelectedEntityContext({ entityId: null, label: "", entityType: "" });
+        meetingSearchResultsEl.innerHTML = "";
+        entitySearchResultsEl.innerHTML = "";
+        contentSearchResultsEl.innerHTML = "";
+        entityRelatedResultsEl.innerHTML = "";
+        entityMentionsResultsEl.innerHTML = "";
+        void loadStoredMeetingsBrowse();
+        return;
+      }
+      if (key === "meetingId") {
+        setGlobalMeetingFilter(null);
+        selectedMeetingContext = null;
+        renderLeftEntityContext();
+        void loadStoredMeetingsBrowse();
+      }
     });
   </script>
 </body>

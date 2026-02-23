@@ -4,6 +4,7 @@ from typing import Callable
 
 from sqlalchemy.orm import Session
 from . import civicweb_client as cw
+from .document_text import upsert_document_text_extraction_from_document
 from .entities import extract_entities_from_text, replace_entity_mentions_for_source
 from .minutes import upsert_minutes_metadata_from_document
 from .parser import parse_agenda_html
@@ -11,6 +12,7 @@ from .models import (
     Meeting,
     AgendaItem,
     Document,
+    DocumentTextExtraction,
     MeetingMinutesMetadata,
     MeetingRawData,
     MeetingRangeDiscoveryCache,
@@ -128,6 +130,13 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
                 title=doc.title,
                 url=doc.url,
             )
+            doc_text = upsert_document_text_extraction_from_document(
+                db=db,
+                meeting_id=meeting_id,
+                document_id=doc.document_id,
+                title=doc.title,
+                url=doc.url,
+            )
             replace_entity_mentions_for_source(
                 db,
                 meeting_id=meeting_id,
@@ -138,6 +147,18 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
                 context_text=doc.title,
                 entities=extract_entities_from_text(doc.title),
             )
+            if doc_text and doc_text.text_excerpt:
+                db.flush()
+                replace_entity_mentions_for_source(
+                    db,
+                    meeting_id=meeting_id,
+                    agenda_item_id=item.id,
+                    document_id=doc.document_id,
+                    source_type="document_content",
+                    source_id=doc_text.id,
+                    context_text=doc_text.text_excerpt,
+                    entities=extract_entities_from_text(doc_text.text_excerpt),
+                )
 
     db.flush()
     minutes_rows = (
