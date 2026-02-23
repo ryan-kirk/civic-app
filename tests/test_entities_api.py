@@ -4,9 +4,22 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db import Base
 from app.entities import extract_entities_from_text, replace_entity_mentions_for_source
+from app.graph import backfill_graph_entities_and_connections
 from app.ingest import ingest_meeting
 from app.main import app, get_db
-from app.models import AgendaItem, EntityMention, Meeting, MeetingMinutesMetadata
+from app.models import (
+    AgendaItem,
+    Document,
+    Entity,
+    EntityBinding,
+    EntityConnection,
+    EntityDateValue,
+    EntityMention,
+    EntityOrganization,
+    EntityPlace,
+    Meeting,
+    MeetingMinutesMetadata,
+)
 
 
 def test_meeting_entities_and_search_endpoint(tmp_path):
@@ -244,3 +257,134 @@ def test_person_alias_snowball_does_not_duplicate_direct_person_mention(tmp_path
         assert len(person_mentions) == 1
         assert person_mentions[0].mention_text == "Jane Smith"
         assert float(person_mentions[0].confidence) == 1.0
+
+
+def test_graph_backfill_promotes_meeting_and_document_entities_and_connections(tmp_path):
+    test_db_path = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{test_db_path}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    with TestingSessionLocal() as db:
+        meeting = Meeting(
+            meeting_id=1408,
+            name="City Council - February 17, 2026",
+            date="",
+            time="05:30 PM",
+            location="3600 86th Street",
+            type_id=1,
+            video_url="",
+        )
+        db.add(meeting)
+        db.flush()
+        doc = Document(
+            meeting_id=1408,
+            agenda_item_id=None,
+            document_id=149076,
+            title="City Council Budget Work Session - February 7, 2026 - Minutes - Pdf",
+            url="https://example.test/minutes.pdf",
+            handle="h1",
+        )
+        db.add(doc)
+        db.flush()
+
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=1408,
+            source_type="meeting_metadata",
+            source_id=1408,
+            context_text="City Council - February 17, 2026 at 3600 86th Street",
+            entities=extract_entities_from_text("City Council - February 17, 2026 at 3600 86th Street"),
+        )
+        replace_entity_mentions_for_source(
+            db,
+            meeting_id=1408,
+            document_id=149076,
+            source_type="document_content",
+            source_id=doc.id,
+            context_text="The Enclave Apartments, LLC discussed rezoning at 10841 Douglas Avenue on February 17, 2026.",
+            entities=extract_entities_from_text(
+                "The Enclave Apartments, LLC discussed rezoning at 10841 Douglas Avenue on February 17, 2026."
+            ),
+        )
+        db.flush()
+
+        assert db.query(EntityPlace).count() >= 1
+        assert db.query(EntityOrganization).count() >= 1
+        assert db.query(EntityDateValue).count() >= 1
+
+        stats = backfill_graph_entities_and_connections(db, meeting_id=1408)
+        assert stats["processed_meetings"] == 1
+
+        meeting_entity = (
+            db.query(Entity)
+            .filter(Entity.entity_type == "meeting", Entity.normalized_value == "meeting:1408")
+            .one_or_none()
+        )
+        assert meeting_entity is not None
+        document_entity = (
+            db.query(Entity)
+            .filter(Entity.entity_type == "document", Entity.normalized_value == "document:1408:149076")
+            .one_or_none()
+        )
+        assert document_entity is not None
+
+        assert (
+            db.query(EntityBinding)
+            .filter(EntityBinding.entity_id == meeting_entity.id, EntityBinding.source_table == "meetings", EntityBinding.source_id == 1408)
+            .one_or_none()
+        ) is not None
+        assert (
+            db.query(EntityBinding)
+            .filter(EntityBinding.entity_id == document_entity.id, EntityBinding.source_table == "documents", EntityBinding.source_id == doc.id)
+            .one_or_none()
+        ) is not None
+
+        assert (
+            db.query(EntityConnection)
+            .filter(
+                EntityConnection.from_entity_id == meeting_entity.id,
+                EntityConnection.to_entity_id == document_entity.id,
+                EntityConnection.relation_type == "contains_document",
+            )
+            .one_or_none()
+        ) is not None
+
+    try:
+        client = TestClient(app)
+        search = client.get("/entities/search", params={"q": "Meeting 1408"})
+        assert search.status_code == 200
+        rows = search.json()
+        meeting_row = next((r for r in rows if r["entity_type"] == "meeting" and r["normalized_value"] == "meeting:1408"), None)
+        assert meeting_row is not None
+        assert any(b["source_table"] == "meetings" and b["source_id"] == 1408 for b in meeting_row.get("bindings", []))
+
+        conn = client.get(f"/entities/{meeting_row['entity_id']}/connections")
+        assert conn.status_code == 200
+        cp = conn.json()
+        assert cp
+        doc_conn = next((r for r in cp if r["entity_type"] == "document" and r["relation_type"] == "contains_document"), None)
+        assert doc_conn is not None
+        assert any(b["source_table"] == "documents" for b in doc_conn.get("bindings", []))
+        assert any(r["entity_type"] in {"address", "date", "organization"} for r in cp)
+
+        evid = client.get(
+            f"/entities/{meeting_row['entity_id']}/connections/{doc_conn['entity_id']}/evidence",
+            params={"relation_type": "contains_document", "direction": "outgoing"},
+        )
+        assert evid.status_code == 200
+        ep = evid.json()
+        assert ep
+        assert any(row["evidence_source_type"] == "documents" for row in ep)
+        assert any("City Council Budget Work Session" in (row["context_text"] or "") for row in ep)
+    finally:
+        app.dependency_overrides.clear()

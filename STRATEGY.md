@@ -71,6 +71,17 @@ Topic-filtered meeting views
 
 This establishes the foundational dataset.
 
+Recommended UI Model
+Use a strict Search -> Filter -> Focus -> Connect -> Evidence -> Pivot layout.
+
+Top (Search + State)
+This should be the control surface and current state only.
+
+Global search / entity explorer controls
+Active filters
+Current focus summary (single-line or compact card)
+Optional lens shortcuts (Zoning, Schools, etc.)
+
 Phase 2 — Zoning Early Warning System
 
 Objective:

@@ -55,8 +55,12 @@ Current API surface:
   - Returns extracted entities and mentions for a meeting
 - `GET /entities/search?q=...`
   - Searches stored entities across meetings for UI exploration
+- `GET /entities/{entity_id}/connections`
+  - Returns graph connections (relationships) for an entity node, aggregated by neighbor + relation type
 - `GET /entities/{entity_id}/related`
   - Returns co-occurring entities based on shared meeting mentions
+- `POST /graph/backfill`
+  - Backfills graph entities/bindings/connections for existing stored meetings/documents/mentions
 - `POST /ingest/meeting/{meeting_id}`
   - Ingests one meeting into local DB
 - `POST /ingest/range?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD&limit=N`
@@ -122,6 +126,74 @@ Current API surface:
   - `entities` (canonical entity values)
   - `entity_aliases` (deterministic aliases, used for person snowball matching)
   - `entity_mentions` (source-linked mentions with context)
+
+## Graph Model (Nodes / Connections / Evidence)
+
+Conceptual model:
+
+- `entities` = graph nodes (people, organizations, addresses, dates, meetings, documents, etc.)
+- `entity_connections` = graph relationships / edges between nodes
+- `entity_mentions` = evidence rows (source snippets + provenance + confidence)
+- `topics` = classification labels/signals (not entity nodes)
+
+Current graph-specific node kinds added:
+
+- `meeting`
+- `document`
+
+### Graph Schema (Stage 2-3 Foundation)
+
+`entity_bindings` (maps a graph node to a canonical source-row identity)
+
+- `id` (PK)
+- `entity_id` (FK -> `entities.id`)
+- `source_table` (`meetings`, `documents`, ...)
+- `source_id` (local source table PK)
+- Constraints:
+  - unique (`source_table`, `source_id`) as `uq_entity_binding_source`
+
+`entity_connections` (graph edges with provenance anchor)
+
+- `id` (PK)
+- `from_entity_id` (FK -> `entities.id`)
+- `to_entity_id` (FK -> `entities.id`)
+- `relation_type` (examples: `contains_document`, `mentions`, `occurs_on`, `occurs_at`)
+- `meeting_id` (nullable FK-ish convenience field for filtering/aggregation)
+- `document_id` (nullable CivicWeb document id convenience field)
+- `evidence_source_type` (source provenance type; aligns with `entity_mentions.source_type`)
+- `evidence_source_id` (source row id for provenance)
+- `strength` (numeric weight, currently derived from mention confidence / structural default)
+- `evidence_count` (currently `1` per unique edge+evidence row; aggregated in API)
+- `last_seen_at` (UTC ISO timestamp)
+- Constraints:
+  - unique (`from_entity_id`, `to_entity_id`, `relation_type`, `evidence_source_type`, `evidence_source_id`)
+    as `uq_entity_connection_edge_evidence`
+
+### Ingest Pipeline Mapping (Current Implementation)
+
+During `ingest_meeting(...)`:
+
+1. Existing deterministic extraction persists `entity_mentions` (evidence) from:
+   - `meeting_metadata`
+   - `agenda_item_title`
+   - `document_title`
+   - `document_content`
+   - `minutes_excerpt`
+2. Graph rebuild runs (`rebuild_graph_for_meeting`)
+3. Graph rebuild upserts:
+   - meeting node (`entity_type=meeting`, normalized `meeting:{meeting_id}`)
+   - document nodes (`entity_type=document`, normalized `document:{meeting_id}:{document_id}`)
+   - `entity_bindings` for meeting/document source rows
+4. Graph rebuild upserts structural connections:
+   - `meeting -> document` (`contains_document`)
+5. Graph rebuild upserts evidence-backed connections from mentions:
+   - `meeting -> entity` (`mentions`, or `occurs_on` / `occurs_at` for meeting metadata date/address)
+   - `document -> entity` (`mentions`) for document-backed evidence sources
+
+Backfill path:
+
+- `POST /graph/backfill` runs the same graph rebuild logic against already-stored meetings/documents/mentions
+- This is the supported way to promote historical data into graph nodes/edges after schema changes
 
 ## Topic Classification
 

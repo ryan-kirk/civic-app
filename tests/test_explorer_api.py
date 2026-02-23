@@ -131,6 +131,11 @@ def test_entity_suggest_and_explore_views(tmp_path):
         stp = stored_topic.json()
         assert any(r["matched_topic_count"] >= 1 for r in stp)
 
+        stored_meeting_phrase = client.get("/stored/meetings", params={"q": "Meeting 5002", "limit": 10})
+        assert stored_meeting_phrase.status_code == 200
+        smp = stored_meeting_phrase.json()
+        assert any(r["meeting_id"] == 5002 for r in smp)
+
         cov = client.get("/explore/coverage")
         assert cov.status_code == 200
         cv = cov.json()

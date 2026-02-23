@@ -182,3 +182,105 @@ class EntityAlias(Base):
 	confidence: Mapped[float] = mapped_column(default=1.0)
 
 	entity = relationship("Entity")
+
+
+class EntityBinding(Base):
+	__tablename__ = "entity_bindings"
+	__table_args__ = (
+		UniqueConstraint("source_table", "source_id", name="uq_entity_binding_source"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	source_table: Mapped[str] = mapped_column(String, index=True)  # meetings, documents
+	source_id: Mapped[int] = mapped_column(Integer, index=True)    # local PK for the source row
+
+	entity = relationship("Entity")
+
+
+class EntityConnection(Base):
+	__tablename__ = "entity_connections"
+	__table_args__ = (
+		UniqueConstraint(
+			"from_entity_id",
+			"to_entity_id",
+			"relation_type",
+			"evidence_source_type",
+			"evidence_source_id",
+			name="uq_entity_connection_edge_evidence",
+		),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	from_entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	to_entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	relation_type: Mapped[str] = mapped_column(String, index=True)  # contains_document, mentions, ...
+	meeting_id: Mapped[int | None] = mapped_column(ForeignKey("meetings.meeting_id"), nullable=True, index=True)
+	document_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+	evidence_source_type: Mapped[str] = mapped_column(String, default="", index=True)  # source row provenance
+	evidence_source_id: Mapped[int] = mapped_column(Integer, default=0, index=True)
+	strength: Mapped[float] = mapped_column(default=1.0)
+	evidence_count: Mapped[int] = mapped_column(Integer, default=1)
+	last_seen_at: Mapped[str] = mapped_column(String, default="")
+
+	from_entity = relationship("Entity", foreign_keys=[from_entity_id])
+	to_entity = relationship("Entity", foreign_keys=[to_entity_id])
+
+
+class EntityPerson(Base):
+	__tablename__ = "entity_people"
+	__table_args__ = (
+		UniqueConstraint("entity_id", name="uq_entity_people_entity"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	full_name: Mapped[str] = mapped_column(Text, default="")
+	first_name: Mapped[str] = mapped_column(String, default="")
+	last_name: Mapped[str] = mapped_column(String, default="")
+
+	entity = relationship("Entity")
+
+
+class EntityPlace(Base):
+	__tablename__ = "entity_places"
+	__table_args__ = (
+		UniqueConstraint("entity_id", name="uq_entity_places_entity"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	address_text: Mapped[str] = mapped_column(Text, default="")
+	city_hint: Mapped[str] = mapped_column(String, default="")
+	state_hint: Mapped[str] = mapped_column(String, default="")
+	zip_hint: Mapped[str] = mapped_column(String, default="")
+
+	entity = relationship("Entity")
+
+
+class EntityOrganization(Base):
+	__tablename__ = "entity_organizations"
+	__table_args__ = (
+		UniqueConstraint("entity_id", name="uq_entity_organizations_entity"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	name_text: Mapped[str] = mapped_column(Text, default="")
+	legal_suffix: Mapped[str] = mapped_column(String, default="")
+
+	entity = relationship("Entity")
+
+
+class EntityDateValue(Base):
+	__tablename__ = "entity_dates"
+	__table_args__ = (
+		UniqueConstraint("entity_id", name="uq_entity_dates_entity"),
+	)
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True)
+	entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), index=True)
+	date_iso: Mapped[str] = mapped_column(String, index=True, default="")
+	label_text: Mapped[str] = mapped_column(Text, default="")
+
+	entity = relationship("Entity")

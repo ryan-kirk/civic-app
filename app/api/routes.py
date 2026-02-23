@@ -8,18 +8,22 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, tuple_
 from app.config import settings
 from app.db import get_db
 from app.models import (
     AgendaItem,
     Document,
     Entity,
+    EntityBinding,
+    EntityConnection,
     EntityMention,
     Meeting,
     MeetingMinutesMetadata,
     MeetingRangeDiscoveryCache,
 )
+from app.graph import backfill_graph_entities_and_connections
+from app.entities import backfill_entity_kind_records
 from app.services.civicweb_client import CivicWebClient
 from app.classifiers.topics import classify_topics
 from app.extractors.zoning import extract_zoning_signals
@@ -33,6 +37,9 @@ from app.schemas import (
     ExploreTopicSummaryOut,
     EntitySuggestOut,
     EntityMentionOut,
+    EntityBindingOut,
+    EntityConnectionOut,
+    ConnectionEvidenceOut,
     RelatedEntityOut,
     EntitySummaryOut,
     MeetingMinutesMetadataOut,
@@ -49,6 +56,16 @@ KNOWN_CITIES = ["Urbandale", "Des Moines", "Waukee", "Clive", "Windsor Heights",
 ZIP_REGEX = re.compile(r"\b\d{5}(?:-\d{4})?\b")
 
 
+def _entity_binding_out_rows(db: Session, entity_id: int) -> list[EntityBindingOut]:
+    rows = (
+        db.query(EntityBinding)
+        .filter(EntityBinding.entity_id == entity_id)
+        .order_by(EntityBinding.source_table.asc(), EntityBinding.source_id.asc())
+        .all()
+    )
+    return [EntityBindingOut(source_table=row.source_table, source_id=int(row.source_id)) for row in rows]
+
+
 @router.get("/health")
 async def health():
     return {"status": "ok"}
@@ -59,6 +76,20 @@ async def runtime_info():
     return {
         "python_executable": sys.executable,
         "pypdf_available": bool(importlib.util.find_spec("pypdf")),
+    }
+
+
+@router.post("/graph/backfill")
+def graph_backfill(
+    limit: int | None = Query(default=None, ge=1, le=10000),
+    meeting_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    graph_stats = backfill_graph_entities_and_connections(db, limit=limit, meeting_id=meeting_id)
+    kind_stats = backfill_entity_kind_records(db)
+    return {
+        **graph_stats,
+        "entity_kind_rows_upserted": kind_stats.get("upserted", 0),
     }
 
 
@@ -117,6 +148,16 @@ def explore_coverage(db: Session = Depends(get_db)):
     document_count = db.query(func.count(Document.id)).scalar() or 0
     minutes_count = db.query(func.count(MeetingMinutesMetadata.id)).scalar() or 0
     entity_count = db.query(func.count(Entity.id)).scalar() or 0
+    connection_count = db.query(func.count(EntityConnection.id)).scalar() or 0
+    entity_type_rows = (
+        db.query(Entity.entity_type, func.count(Entity.id))
+        .group_by(Entity.entity_type)
+        .all()
+    )
+    entity_type_counts = [
+        {"entity_type": (entity_type or "unknown"), "count": int(count or 0)}
+        for entity_type, count in sorted(entity_type_rows, key=lambda row: (-int(row[1] or 0), str(row[0] or "")))
+    ]
     cache_rows = (
         db.query(MeetingRangeDiscoveryCache)
         .order_by(MeetingRangeDiscoveryCache.last_fetched_at.desc(), MeetingRangeDiscoveryCache.id.desc())
@@ -141,6 +182,8 @@ def explore_coverage(db: Session = Depends(get_db)):
         "document_count": int(document_count),
         "minutes_metadata_count": int(minutes_count),
         "entity_count": int(entity_count),
+        "connection_count": int(connection_count),
+        "entity_type_counts": entity_type_counts,
         "recent_discovery_ranges": recent_ranges,
     }
 
@@ -201,6 +244,8 @@ def list_stored_meetings(
 ):
     meetings = db.query(Meeting).order_by(Meeting.meeting_id.desc()).limit(5000).all()
     q_norm = normalize_text(q or "").lower()
+    q_meeting_id_match = re.search(r"\bmeeting\s+(\d+)\b", q_norm)
+    q_meeting_id = int(q_meeting_id_match.group(1)) if q_meeting_id_match else (int(q_norm) if q_norm.isdigit() else None)
     topic_norm = normalize_text(topic or "").lower()
     out: list[StoredMeetingSummaryOut] = []
     for m in meetings:
@@ -211,7 +256,10 @@ def list_stored_meetings(
         if date_to and display_date and display_date > date_to:
             continue
         hay = " ".join([m.name or "", m.location or "", m.time or ""]).lower()
-        if q_norm and q_norm not in hay and q_norm not in str(m.meeting_id):
+        q_matches = (not q_norm) or (q_norm in hay) or (q_norm in str(m.meeting_id))
+        if q_meeting_id is not None and int(m.meeting_id) == q_meeting_id:
+            q_matches = True
+        if not q_matches:
             continue
 
         agenda_items = db.query(AgendaItem).filter(AgendaItem.meeting_id == m.meeting_id).all()
@@ -381,6 +429,7 @@ def get_meeting_entities(
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=0,
+                bindings=_entity_binding_out_rows(db, entity.id),
                 mentions=[],
             )
         summary = grouped[entity.id]
@@ -436,6 +485,7 @@ def search_entities(
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=int(total_mentions),
+                bindings=_entity_binding_out_rows(db, entity.id),
                 mentions=[
                     EntityMentionOut(
                         meeting_id=m.meeting_id,
@@ -468,6 +518,7 @@ def get_entity_detail(
             display_value="",
             normalized_value="",
             mention_count=0,
+            bindings=[],
             mentions=[],
         )
     total_mentions = (
@@ -489,6 +540,7 @@ def get_entity_detail(
         display_value=entity.display_value,
         normalized_value=entity.normalized_value,
         mention_count=int(total_mentions),
+        bindings=_entity_binding_out_rows(db, entity.id),
         mentions=[
             EntityMentionOut(
                 meeting_id=m.meeting_id,
@@ -564,6 +616,168 @@ def related_entities(
                 normalized_value=entity.normalized_value,
                 cooccurrence_count=int(bucket["cooccurrence_count"]),
                 shared_meeting_count=len(bucket["meeting_ids"]),
+            )
+        )
+    return out
+
+
+@router.get("/entities/{entity_id}/connections", response_model=list[EntityConnectionOut])
+def get_entity_connections(
+    entity_id: int,
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    target = db.query(Entity).filter(Entity.id == entity_id).one_or_none()
+    if not target:
+        return []
+
+    edges = (
+        db.query(EntityConnection)
+        .filter(
+            (EntityConnection.from_entity_id == entity_id) | (EntityConnection.to_entity_id == entity_id)
+        )
+        .order_by(EntityConnection.id.desc())
+        .limit(5000)
+        .all()
+    )
+    if not edges:
+        return []
+
+    buckets: dict[tuple[int, str, str], dict] = {}
+    other_ids: set[int] = set()
+    for edge in edges:
+        outgoing = int(edge.from_entity_id) == int(entity_id)
+        other_id = int(edge.to_entity_id if outgoing else edge.from_entity_id)
+        other_ids.add(other_id)
+        direction = "outgoing" if outgoing else "incoming"
+        key = (other_id, edge.relation_type or "", direction)
+        bucket = buckets.setdefault(
+            key,
+            {
+                "edge_count": 0,
+                "evidence_count": 0,
+                "meeting_ids": set(),
+            },
+        )
+        bucket["edge_count"] += 1
+        bucket["evidence_count"] += max(1, int(edge.evidence_count or 1))
+        if edge.meeting_id is not None:
+            bucket["meeting_ids"].add(int(edge.meeting_id))
+
+    if not buckets:
+        return []
+
+    entities = {
+        row.id: row
+        for row in db.query(Entity).filter(Entity.id.in_(list(other_ids))).all()
+    }
+
+    ranked_keys = sorted(
+        buckets.keys(),
+        key=lambda key: (
+            -len(buckets[key]["meeting_ids"]),
+            -int(buckets[key]["evidence_count"]),
+            -int(buckets[key]["edge_count"]),
+            (entities.get(key[0]).display_value.lower() if entities.get(key[0]) else ""),
+        ),
+    )
+    out: list[EntityConnectionOut] = []
+    for key in ranked_keys[:limit]:
+        other_id, relation_type, direction = key
+        other = entities.get(other_id)
+        if not other:
+            continue
+        bucket = buckets[key]
+        out.append(
+            EntityConnectionOut(
+                entity_id=other.id,
+                entity_type=other.entity_type,
+                display_value=other.display_value,
+                normalized_value=other.normalized_value,
+                relation_type=relation_type,
+                direction=direction,
+                edge_count=int(bucket["edge_count"]),
+                evidence_count=int(bucket["evidence_count"]),
+                shared_meeting_count=len(bucket["meeting_ids"]),
+                bindings=_entity_binding_out_rows(db, other.id),
+            )
+        )
+    return out
+
+
+@router.get("/entities/{entity_id}/connections/{other_entity_id}/evidence", response_model=list[ConnectionEvidenceOut])
+def get_entity_connection_evidence(
+    entity_id: int,
+    other_entity_id: int,
+    relation_type: str = Query(..., min_length=1),
+    direction: str = Query(..., pattern="^(incoming|outgoing)$"),
+    limit: int = Query(default=100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    relation_norm = normalize_text(relation_type)
+    if direction == "outgoing":
+        from_id, to_id = entity_id, other_entity_id
+    else:
+        from_id, to_id = other_entity_id, entity_id
+
+    edges = (
+        db.query(EntityConnection)
+        .filter(
+            EntityConnection.from_entity_id == from_id,
+            EntityConnection.to_entity_id == to_id,
+            EntityConnection.relation_type == relation_norm,
+        )
+        .order_by(EntityConnection.id.desc())
+        .limit(limit)
+        .all()
+    )
+    if not edges:
+        return []
+
+    mention_keys = {
+        (e.evidence_source_type or "", int(e.evidence_source_id or 0))
+        for e in edges
+        if (e.evidence_source_type or "") not in {"documents"}
+    }
+    mention_lookup: dict[tuple[str, int], EntityMention] = {}
+    if mention_keys:
+        mention_rows = (
+            db.query(EntityMention)
+            .filter(
+                tuple_(EntityMention.source_type, EntityMention.source_id).in_(list(mention_keys))
+            )
+            .all()
+        )
+        for m in mention_rows:
+            mention_lookup[(m.source_type or "", int(m.source_id or 0))] = m
+
+    document_ids = [
+        int(e.evidence_source_id)
+        for e in edges
+        if (e.evidence_source_type or "") == "documents" and int(e.evidence_source_id or 0) > 0
+    ]
+    document_lookup: dict[int, Document] = {}
+    if document_ids:
+        for d in db.query(Document).filter(Document.id.in_(document_ids)).all():
+            document_lookup[int(d.id)] = d
+
+    out: list[ConnectionEvidenceOut] = []
+    for edge in edges:
+        mention = mention_lookup.get((edge.evidence_source_type or "", int(edge.evidence_source_id or 0)))
+        doc = document_lookup.get(int(edge.evidence_source_id or 0)) if (edge.evidence_source_type or "") == "documents" else None
+        out.append(
+            ConnectionEvidenceOut(
+                relation_type=edge.relation_type or "",
+                direction=direction,
+                meeting_id=edge.meeting_id,
+                document_id=edge.document_id,
+                evidence_source_type=edge.evidence_source_type or "",
+                evidence_source_id=int(edge.evidence_source_id or 0),
+                strength=float(edge.strength or 0.0),
+                mention_text=normalize_text((mention.mention_text if mention else "") or ""),
+                context_text=normalize_text(
+                    (mention.context_text if mention else "") or (doc.title if doc else "")
+                ),
             )
         )
     return out
@@ -647,6 +861,7 @@ def explore_popular(
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=int(count or 0),
+                bindings=_entity_binding_out_rows(db, entity.id),
                 mentions=[
                     EntityMentionOut(
                         meeting_id=m.meeting_id,

@@ -47,12 +47,18 @@ class EntityMentionOut(BaseModel):
     confidence: float
 
 
+class EntityBindingOut(BaseModel):
+    source_table: str
+    source_id: int
+
+
 class EntitySummaryOut(BaseModel):
     entity_id: int
     entity_type: str
     display_value: str
     normalized_value: str
     mention_count: int
+    bindings: List[EntityBindingOut] = Field(default_factory=list)
     mentions: List[EntityMentionOut] = Field(default_factory=list)
 
 
@@ -63,6 +69,31 @@ class RelatedEntityOut(BaseModel):
     normalized_value: str
     cooccurrence_count: int
     shared_meeting_count: int
+
+
+class EntityConnectionOut(BaseModel):
+    entity_id: int
+    entity_type: str
+    display_value: str
+    normalized_value: str
+    relation_type: str
+    direction: str
+    edge_count: int
+    evidence_count: int
+    shared_meeting_count: int
+    bindings: List[EntityBindingOut] = Field(default_factory=list)
+
+
+class ConnectionEvidenceOut(BaseModel):
+    relation_type: str
+    direction: str
+    meeting_id: Optional[int] = None
+    document_id: Optional[int] = None
+    evidence_source_type: str
+    evidence_source_id: int
+    strength: float
+    mention_text: str = ""
+    context_text: str = ""
 
 
 class EntitySuggestOut(BaseModel):

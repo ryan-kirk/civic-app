@@ -3,7 +3,15 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from .models import Entity, EntityAlias, EntityMention
+from .models import (
+    Entity,
+    EntityAlias,
+    EntityMention,
+    EntityPerson,
+    EntityPlace,
+    EntityOrganization,
+    EntityDateValue,
+)
 from .utils.text import normalize_text
 
 DATE_PATTERN = re.compile(
@@ -153,7 +161,55 @@ def _upsert_entity(db: Session, entity_type: str, display_value: str, normalized
             source="person_seed",
             confidence=1.0,
         )
+    _upsert_entity_kind_record(db, row)
     return row
+
+
+def _upsert_entity_kind_record(db: Session, entity: Entity) -> None:
+    etype = (entity.entity_type or "").lower()
+    display = normalize_text(entity.display_value or "")
+
+    if etype == "person":
+        parts = display.split()
+        first_name = parts[0] if parts else ""
+        last_name = parts[-1] if len(parts) >= 2 else ""
+        row = db.query(EntityPerson).filter(EntityPerson.entity_id == entity.id).one_or_none()
+        if not row:
+            row = EntityPerson(entity_id=entity.id)
+            db.add(row)
+        row.full_name = display
+        row.first_name = first_name
+        row.last_name = last_name
+        return
+
+    if etype == "address":
+        row = db.query(EntityPlace).filter(EntityPlace.entity_id == entity.id).one_or_none()
+        if not row:
+            row = EntityPlace(entity_id=entity.id)
+            db.add(row)
+        row.address_text = display
+        if not row.state_hint:
+            row.state_hint = "Iowa"
+        return
+
+    if etype == "organization":
+        row = db.query(EntityOrganization).filter(EntityOrganization.entity_id == entity.id).one_or_none()
+        if not row:
+            row = EntityOrganization(entity_id=entity.id)
+            db.add(row)
+        row.name_text = display
+        suffix_match = re.search(r"\b(LLC|Inc\.?|Company|Corp\.?|Corporation)\b$", display, re.IGNORECASE)
+        row.legal_suffix = suffix_match.group(1) if suffix_match else ""
+        return
+
+    if etype == "date":
+        row = db.query(EntityDateValue).filter(EntityDateValue.entity_id == entity.id).one_or_none()
+        if not row:
+            row = EntityDateValue(entity_id=entity.id)
+            db.add(row)
+        row.date_iso = normalize_text(entity.normalized_value or "")
+        row.label_text = display
+        return
 
 
 def _upsert_entity_alias(
@@ -304,3 +360,14 @@ def replace_entity_mentions_for_source(
         )
     )
     return mentions
+
+
+def backfill_entity_kind_records(db: Session, *, limit: int | None = None) -> dict[str, int]:
+    q = db.query(Entity).order_by(Entity.id.asc())
+    if limit is not None and int(limit) > 0:
+        q = q.limit(int(limit))
+    rows = q.all()
+    for entity in rows:
+        _upsert_entity_kind_record(db, entity)
+    db.commit()
+    return {"processed": len(rows), "upserted": len(rows)}

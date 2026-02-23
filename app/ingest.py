@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from . import civicweb_client as cw
 from .document_text import upsert_document_text_extraction_from_document
 from .entities import extract_entities_from_text, replace_entity_mentions_for_source
+from .graph import rebuild_graph_for_meeting
 from .minutes import upsert_minutes_metadata_from_document
 from .parser import parse_agenda_html
 from .models import (
@@ -77,6 +78,7 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
             break
 
     if not agenda_html:
+        rebuild_graph_for_meeting(db, meeting_id)
         db.commit()
         return {"meeting_id": meeting_id, "status": "no_agenda_html"}
 
@@ -177,6 +179,7 @@ def ingest_meeting(db: Session, meeting_id: int, store_raw: bool = True):
             entities=extract_entities_from_text(m.text_excerpt),
         )
 
+    rebuild_graph_for_meeting(db, meeting_id)
     db.commit()
     return {"meeting_id": meeting_id, "status": "ok", "agenda_items": len(parsed_items)}
 
