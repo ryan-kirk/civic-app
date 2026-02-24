@@ -122,11 +122,11 @@
       box-shadow: 0 10px 25px rgba(0,0,0,.04);
     }
     .top-explorer-controls {
-      padding: 12px 14px;
+      padding: 10px 12px;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: start;
-      gap: 10px;
+      gap: 8px;
     }
     .top-explorer-controls > * { min-width: 0; }
     .top-filter-stack {
@@ -156,13 +156,70 @@
       letter-spacing: .03em;
     }
     .top-search-panel .hint { margin: 0; }
+    .top-search-preview {
+      border-top: 1px solid #ece5d7;
+      padding-top: 6px;
+      display: grid;
+      gap: 5px;
+    }
+    .top-search-preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
+    .top-search-preview-list {
+      display: grid;
+      gap: 5px;
+    }
+    .top-search-hit {
+      border: 1px solid #e6dfd2;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #fbfaf6;
+      display: grid;
+      gap: 3px;
+    }
+    .top-search-hit .hit-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .top-search-hit .hit-head button {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      color: #0b4d5f;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+    }
+    .top-search-hit .hit-head button:hover { text-decoration: underline; }
+    .top-search-hit .hit-meta {
+      font-size: .74rem;
+      color: #59635e;
+      line-height: 1.25;
+    }
     .top-explorer-controls .top-focus-panel {
       border: 1px solid #e6dfd2;
       border-radius: 10px;
       background: #fbfaf6;
-      padding: 10px;
+      padding: 8px;
       display: grid;
-      gap: 6px;
+      gap: 5px;
+    }
+    .top-focus-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
     .top-explorer-controls .top-focus-panel .top-focus-head {
       font-size: .74rem;
@@ -171,6 +228,22 @@
       letter-spacing: .05em;
       font-weight: 700;
     }
+    .top-focus-clear-btn {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #4a554f;
+      border-radius: 999px;
+      width: 22px;
+      height: 22px;
+      line-height: 1;
+      font-size: .9rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .top-focus-clear-btn:hover { background: #fbfaf6; }
     .top-explorer-controls .top-focus-panel .top-focus-sub {
       font-size: .82rem;
       color: #45504b;
@@ -298,6 +371,10 @@
       padding: 5px 10px;
       border-radius: 999px;
       font-size: .78rem;
+    }
+    .facet-shortcut-btn {
+      border-style: dashed;
+      background: #fff;
     }
     .top-explorer-controls .search-row button {
       padding: 9px 12px;
@@ -1233,6 +1310,91 @@
       border-radius: 3px;
       padding: 0 2px;
     }
+    .flow-jump-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      background: rgba(248, 246, 239, .95);
+      backdrop-filter: blur(2px);
+    }
+    .focus-snapshot-sticky {
+      position: sticky;
+      top: 44px;
+      z-index: 5;
+      background: rgba(248, 246, 239, .97);
+      backdrop-filter: blur(2px);
+    }
+    .focus-snapshot-panel {
+      padding: 10px 12px;
+    }
+    .focus-snapshot-panel .pane-head {
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+    }
+    .focus-snapshot-panel .pane-head h2 {
+      align-self: start;
+    }
+    .focus-snapshot-panel .pane-head .sub {
+      align-self: start;
+    }
+    .focus-snapshot-panel.collapsed .focus-snapshot-body {
+      display: none;
+    }
+    .focus-snapshot-toggle {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .focus-snapshot-toggle:hover { transform: none; background: #fbfaf6; }
+    .focus-snapshot-body {
+      display: grid;
+      gap: 8px;
+    }
+    .focus-snapshot-card {
+      border: 1px solid #e5ded1;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+    }
+    .focus-snapshot-title {
+      font-weight: 800;
+      color: #1f2a24;
+      line-height: 1.2;
+    }
+    .focus-snapshot-meta {
+      color: #55615b;
+      font-size: .84rem;
+      line-height: 1.3;
+    }
+    .focus-snapshot-connection {
+      border-top: 1px dashed #e7e1d6;
+      padding-top: 6px;
+      margin-top: 2px;
+      display: grid;
+      gap: 4px;
+    }
+    .focus-snapshot-connection .label {
+      font-size: .72rem;
+      color: #6a736d;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
+    .exploration-panel, .meeting-master-detail, .related {
+      scroll-margin-top: 48px;
+    }
 
     @media (max-width: 900px) {
       body { overflow: auto; }
@@ -1270,12 +1432,16 @@
       <div class="filter-empty">Filters apply across meeting results and entity discovery.</div>
     </section>
     <section id="topExplorerControlsPanel" class="panel top-explorer-controls">
-      <div id="topFilterSearchCol" class="top-filter-stack">
+      <div id="topSearchMount"></div>
+      <div id="topFilterCol" class="top-filter-stack">
         <div id="topFilterMount"></div>
-        <div id="topSearchMount"></div>
+        <div id="topFilterControlsMount"></div>
       </div>
       <div id="topFocusPanel" class="top-focus-panel" hidden>
-        <div class="top-focus-head">Current Focus</div>
+        <div class="top-focus-head-row">
+          <div class="top-focus-head">Current Focus</div>
+          <button id="clearCurrentFocusBtn" type="button" class="top-focus-clear-btn" title="Clear current focus and selected connection" aria-label="Clear current focus">x</button>
+        </div>
         <div id="entityContextSummary" class="top-focus-sub">No item selected.</div>
         <div id="focusDetailsCard" class="focus-card"></div>
         <div id="topSelectedConnectionPanel" class="focus-card" hidden>
@@ -1290,7 +1456,6 @@
           <div id="topSelectedConnectionStats" class="focus-card-stats"></div>
         </div>
       </div>
-      <div id="topExplorerControlsMount"></div>
     </section>
 
     <section class="workspace">
@@ -1300,6 +1465,21 @@
       <div class="sub">Entity exploration drives meeting context. Select an entity or meeting to progressively load related civic activity.</div>
     </div>
     <div id="operationsPlaceholder" class="related">Operations controls are available in the right pane. Use the Operations section to ingest, browse coverage, and manage cache-aware crawling.</div>
+    <div id="flowJumpPanel" class="related flow-jump-sticky">
+      <strong>Explore Flow</strong>: <span class="meta">Connect → Evidence → Pivot</span>
+      <span style="margin-left:8px;"></span>
+      <button type="button" class="chip" data-flow-jump-target="connect">Connect</button>
+      <button type="button" class="chip" data-flow-jump-target="evidence">Evidence</button>
+      <button type="button" class="chip" data-flow-jump-target="pivot">Pivot</button>
+    </div>
+    <section id="pinnedFocusSnapshotPanel" class="panel focus-snapshot-panel focus-snapshot-sticky" hidden>
+      <div class="pane-head">
+        <h2>Focus Snapshot</h2>
+        <div id="pinnedFocusSnapshotSub" class="sub">Pinned entity/meeting details for the current focus.</div>
+        <button id="pinnedFocusSnapshotToggle" class="focus-snapshot-toggle" type="button" aria-expanded="true">Collapse</button>
+      </div>
+      <div id="pinnedFocusSnapshotBody" class="focus-snapshot-body"></div>
+    </section>
     <section id="operationsPanel" class="panel">
       <div id="operationsHead" class="pane-head">
         <h2>Range Ingest & Coverage</h2>
@@ -1438,8 +1618,15 @@
             <div id="evidencePanelSub" class="sub">Review source snippets and supporting material for the current node or selected connection.</div>
           </div>
           <div id="leftExplorationEmpty" class="hint-inline">Use the entity search on the right or click a topic/entity chip to load contextual exploration results.</div>
-          <div id="leftExplorationMount" class="exploration-grid"></div>
-          <div id="leftEvidenceMeetingMount"></div>
+          <div id="leftEdgeEvidencePanel" class="browse-section">
+            <div id="leftEdgeEvidenceTitle" class="browse-section-title">Selected Edge Proof</div>
+            <div id="leftEdgeEvidenceMount" class="exploration-grid"></div>
+          </div>
+          <div id="leftNodeEvidencePanel" class="browse-section">
+            <div class="browse-section-title">Node / Search Evidence</div>
+            <div id="leftExplorationMount" class="exploration-grid"></div>
+            <div id="leftEvidenceMeetingMount"></div>
+          </div>
         </section>
         <section id="existingDataWorkspacePanel" class="exploration-panel minor">
           <div class="pane-head">
@@ -1474,8 +1661,8 @@
         <div class="search-panel sticky">
           <div id="entityExplorerControlsBlock">
           <div class="entity-panel-header">
-            <div class="entity-title">Entity Facet Explorer</div>
-            <div class="sub">Search graph nodes, then use time/place facets to pivot. Focus and selected connection stay stable while facet panels update.</div>
+            <div class="entity-title">Graph Filters</div>
+            <div class="sub">Set node filters and topical lenses. Search and focus happen in the top strip; facets and graph management stay in this panel.</div>
             <div class="facet-control-grid">
               <div class="facet-mini-panel">
                 <div class="facet-mini-title">Topic Lenses</div>
@@ -1485,14 +1672,6 @@
                   <button type="button" class="lens-btn" data-quick-query="police">Public Safety</button>
                   <button type="button" class="lens-btn" data-quick-query="code enforcement">Enforcement</button>
                   <button type="button" class="lens-btn" data-quick-query="development">Development</button>
-                </div>
-              </div>
-              <div class="facet-mini-panel">
-                <div class="facet-mini-title">Facet Views</div>
-                <div class="view-tabs facet-view-tabs">
-                  <button id="tabSearch" type="button" class="tab-btn active">Search Results</button>
-                  <button id="tabTimeline" type="button" class="tab-btn">Time Facet</button>
-                  <button id="tabMap" type="button" class="tab-btn">Place Facet</button>
                 </div>
               </div>
               <div class="facet-mini-panel">
@@ -1511,12 +1690,6 @@
               </div>
             </div>
           </div>
-          <div class="controls-row">
-            <div class="status-row">
-              <div class="status-label" style="margin-top:0;">Explorer Status</div>
-              <div id="browseStatus" class="status browse">Discovery panel ready.</div>
-            </div>
-          </div>
           <div id="entitySearchControlBlock" class="filter-bar top-search-panel">
             <div class="top-search-panel-head">
               <div class="top-search-panel-title">Entity Search</div>
@@ -1529,13 +1702,33 @@
               <button id="entitySearchBtn" type="button">Search Entities</button>
             </div>
             <div class="hint">Search establishes node filters, then use connections/evidence to pivot.</div>
+            <div id="topSearchPreview" class="top-search-preview" hidden>
+              <div class="top-search-preview-head">
+                <span id="topSearchPreviewTitle">Recent Focuses</span>
+                <span id="topSearchPreviewCount"></span>
+              </div>
+              <div id="topSearchPreviewList" class="top-search-preview-list"></div>
+            </div>
           </div>
+          </div>
+          <div id="facetViewsSidebarPanel" class="sidebar-section facet-active">
+            <div class="sidebar-section-title">Facet Panels</div>
+            <div class="view-tabs facet-view-tabs">
+              <button id="tabSearch" type="button" class="tab-btn facet-shortcut-btn active">Open Search</button>
+              <button id="tabTimeline" type="button" class="tab-btn facet-shortcut-btn">Open Time</button>
+              <button id="tabMap" type="button" class="tab-btn facet-shortcut-btn">Open Places</button>
+            </div>
+            <div class="hint">Opens/highlights sections in the right panel only. Does not change node focus or selected connection.</div>
           </div>
           <div class="sidebar-scroll">
             <div class="sidebar-group-title">Entity Facets</div>
             <div class="sidebar-section collapsed" id="timelineSection"><div class="sidebar-section-title">Time (Date Entities)</div><div id="timelineResults" class="search-results"></div></div>
             <div class="sidebar-section collapsed" id="mapSection"><div class="sidebar-section-title">Places (Address Entities)</div><div id="mapResults" class="search-results"></div></div>
             <div class="sidebar-group-title">Graph Management</div>
+            <div class="sidebar-section" id="explorerStatusSection">
+              <div class="sidebar-section-title">Explorer Status</div>
+              <div id="browseStatus" class="status browse">Discovery panel ready.</div>
+            </div>
             <div class="sidebar-section collapsed" id="diagnosticsSection">
               <div class="sidebar-section-title">Graph Metadata</div>
               <div id="runtimePanel" class="runtime-panel">Graph metadata loading...</div>
@@ -1545,7 +1738,8 @@
               <div id="operationsMount"></div>
             </div>
             <div id="searchSectionsGroup">
-              <div class="sidebar-section" id="popularStartsSection"><div class="sidebar-section-title">Popular Starts</div><div id="startupExploreResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="popularTopicsSection"><div class="sidebar-section-title">Popular Topics</div><div id="startupTopicsResults" class="search-results"></div></div>
+              <div class="sidebar-section" id="popularEntitiesSection"><div class="sidebar-section-title">Popular Entities</div><div id="startupEntitiesResults" class="search-results"></div></div>
               <div class="sidebar-section" id="entityMatchesSection"><div class="sidebar-section-title">Node Matches</div><div id="entitySearchResults" class="search-results"></div></div>
               <div class="sidebar-section" id="meetingMatchesSection"><div class="sidebar-section-title">Stored Meeting Matches (Convenience)</div><div id="meetingSearchResults" class="search-results"></div></div>
               <div class="sidebar-section" id="contentMatchesSection"><div class="sidebar-section-title">Evidence Search Matches (Agenda & Documents)</div><div id="contentSearchResults" class="search-results"></div></div>
@@ -1583,7 +1777,8 @@
     const meetingSearchResultsEl = document.getElementById("meetingSearchResults");
     const entityRelatedResultsEl = document.getElementById("entityRelatedResults");
     const entityMentionsResultsEl = document.getElementById("entityMentionsResults");
-    const startupExploreResultsEl = document.getElementById("startupExploreResults");
+    const startupTopicsResultsEl = document.getElementById("startupTopicsResults");
+    const startupEntitiesResultsEl = document.getElementById("startupEntitiesResults");
     const timelineResultsEl = document.getElementById("timelineResults");
     const mapResultsEl = document.getElementById("mapResults");
     const timelineSectionEl = document.getElementById("timelineSection");
@@ -1606,7 +1801,8 @@
     const operationsHeadEl = document.getElementById("operationsHead");
     const operationsMountEl = document.getElementById("operationsMount");
     const operationsPlaceholderEl = document.getElementById("operationsPlaceholder");
-    const popularStartsSectionEl = document.getElementById("popularStartsSection");
+    const popularTopicsSectionEl = document.getElementById("popularTopicsSection");
+    const popularEntitiesSectionEl = document.getElementById("popularEntitiesSection");
     const existingDataWorkspacePanelEl = document.getElementById("existingDataWorkspacePanel");
     const existingDataPanelEl = document.getElementById("existingDataPanel");
     const entityContextPanelEl = document.getElementById("entityContextPanel");
@@ -1626,11 +1822,15 @@
     const resultsContextSummaryEl = document.getElementById("resultsContextSummary");
     const activeFilterChipsEl = document.getElementById("activeFilterChips");
     const clearAllFiltersBtn = document.getElementById("clearAllFiltersBtn");
-    const topExplorerControlsMountEl = document.getElementById("topExplorerControlsMount");
+    const topFilterControlsMountEl = document.getElementById("topFilterControlsMount");
     const topFilterMountEl = document.getElementById("topFilterMount");
     const topSearchMountEl = document.getElementById("topSearchMount");
     const filterBarPanelEl = document.getElementById("filterBarPanel");
     const entitySearchControlBlockEl = document.getElementById("entitySearchControlBlock");
+    const topSearchPreviewEl = document.getElementById("topSearchPreview");
+    const topSearchPreviewTitleEl = document.getElementById("topSearchPreviewTitle");
+    const topSearchPreviewCountEl = document.getElementById("topSearchPreviewCount");
+    const topSearchPreviewListEl = document.getElementById("topSearchPreviewList");
     const topFocusPanelEl = document.getElementById("topFocusPanel");
     const entityExplorerControlsBlockEl = document.getElementById("entityExplorerControlsBlock");
     const focusDetailsCardEl = document.getElementById("focusDetailsCard");
@@ -1639,6 +1839,7 @@
     const topSelectedConnectionStatsEl = document.getElementById("topSelectedConnectionStats");
     const backToFocusNodeBtn = document.getElementById("backToFocusNodeBtn");
     const clearSelectedConnectionBtn = document.getElementById("clearSelectedConnectionBtn");
+    const clearCurrentFocusBtn = document.getElementById("clearCurrentFocusBtn");
     const entityContextTitleEl = document.getElementById("entityContextTitle");
     const entityContextSubEl = document.getElementById("entityContextSub");
     const entityContextBodyTitleEl = document.getElementById("entityContextBodyTitle");
@@ -1652,9 +1853,18 @@
     const leftPivotMountEl = document.getElementById("leftPivotMount");
     const connectionsMeetingsTitleEl = document.getElementById("connectionsMeetingsTitle");
     const leftEvidenceMeetingMountEl = document.getElementById("leftEvidenceMeetingMount");
+    const leftEdgeEvidencePanelEl = document.getElementById("leftEdgeEvidencePanel");
+    const leftEdgeEvidenceTitleEl = document.getElementById("leftEdgeEvidenceTitle");
+    const leftEdgeEvidenceMountEl = document.getElementById("leftEdgeEvidenceMount");
+    const leftNodeEvidencePanelEl = document.getElementById("leftNodeEvidencePanel");
     const leftExistingDataMountEl = document.getElementById("leftExistingDataMount");
     const evidencePanelTitleEl = document.getElementById("evidencePanelTitle");
     const evidencePanelSubEl = document.getElementById("evidencePanelSub");
+    const flowJumpPanelEl = document.getElementById("flowJumpPanel");
+    const pinnedFocusSnapshotPanelEl = document.getElementById("pinnedFocusSnapshotPanel");
+    const pinnedFocusSnapshotSubEl = document.getElementById("pinnedFocusSnapshotSub");
+    const pinnedFocusSnapshotBodyEl = document.getElementById("pinnedFocusSnapshotBody");
+    const pinnedFocusSnapshotToggleEl = document.getElementById("pinnedFocusSnapshotToggle");
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
@@ -1677,12 +1887,40 @@
     let lastEntityRelatedRows = [];
     let lastConnectionFocus = null;
     let meetingDetailCollapsed = false;
+    let pinnedFocusSnapshotCollapsed = false;
+    let recentFocusHistory = [];
     const globalFilters = {
       topic: "",
       entityQuery: "",
       entityType: "",
       meetingId: null,
     };
+
+    function pushRecentFocus(entry) {
+      const kind = String(entry?.kind || "").trim();
+      const id = Number(entry?.id || 0);
+      const label = String(entry?.label || "").trim();
+      if (!kind || !id || !label) return;
+      const key = `${kind}:${id}`;
+      const next = {
+        key,
+        kind,
+        id,
+        label,
+        entityType: String(entry?.entityType || "").trim(),
+        normalized: String(entry?.normalized || "").trim(),
+        bindings: Array.isArray(entry?.bindings) ? entry.bindings : [],
+        kindMetadata: (entry?.kindMetadata && typeof entry.kindMetadata === "object") ? entry.kindMetadata : {},
+      };
+      recentFocusHistory = [next, ...recentFocusHistory.filter((r) => r.key !== key)].slice(0, 8);
+      renderTopSearchPreview(lastEntitySearchRows);
+    }
+
+    function currentFocusHistoryKey() {
+      if (selectedMeetingContext?.meetingId) return `meeting:${Number(selectedMeetingContext.meetingId)}`;
+      if (selectedEntityContext?.entityId) return `entity:${Number(selectedEntityContext.entityId)}`;
+      return "";
+    }
 
     function mountOperationsPanelInSidebar() {
       if (!(operationsPanelEl instanceof HTMLElement) || !(operationsMountEl instanceof HTMLElement)) return;
@@ -1695,9 +1933,20 @@
     }
 
     function mountExplorerControlsTop() {
-      if (!(topExplorerControlsMountEl instanceof HTMLElement) || !(entityExplorerControlsBlockEl instanceof HTMLElement)) return;
-      if (!topExplorerControlsMountEl.contains(entityExplorerControlsBlockEl)) {
-        topExplorerControlsMountEl.appendChild(entityExplorerControlsBlockEl);
+      if (!(topFilterControlsMountEl instanceof HTMLElement) || !(entityExplorerControlsBlockEl instanceof HTMLElement)) return;
+      if (!topFilterControlsMountEl.contains(entityExplorerControlsBlockEl)) {
+        topFilterControlsMountEl.appendChild(entityExplorerControlsBlockEl);
+      }
+      if (filterBarPanelEl instanceof HTMLElement) {
+        const headerEl = entityExplorerControlsBlockEl.querySelector(".entity-panel-header");
+        const facetGridEl = headerEl instanceof HTMLElement ? headerEl.querySelector(".facet-control-grid") : null;
+        if (headerEl instanceof HTMLElement) {
+          const currentParent = filterBarPanelEl.parentElement;
+          if (currentParent !== headerEl) {
+            headerEl.insertBefore(filterBarPanelEl, facetGridEl instanceof HTMLElement ? facetGridEl : null);
+          }
+          if (topFilterMountEl instanceof HTMLElement) topFilterMountEl.hidden = true;
+        }
       }
       const searchPanel = document.querySelector(".search-panel");
       if (searchPanel instanceof HTMLElement) searchPanel.classList.add("controls-moved");
@@ -1736,6 +1985,12 @@
         if (!(section instanceof HTMLElement)) continue;
         section.classList.remove("collapsed");
         section.classList.add("evidence-flat");
+        if (section === mentionsSectionEl) {
+          if (leftEdgeEvidenceMountEl instanceof HTMLElement && !leftEdgeEvidenceMountEl.contains(section)) {
+            leftEdgeEvidenceMountEl.appendChild(section);
+          }
+          continue;
+        }
         if (!leftExplorationMountEl.contains(section)) {
           leftExplorationMountEl.appendChild(section);
         }
@@ -1774,8 +2029,10 @@
 
     function mountExistingDataPanelInLeftPane() {
       if (!(leftExistingDataMountEl instanceof HTMLElement) || !(existingDataPanelEl instanceof HTMLElement)) return;
-      if (popularStartsSectionEl instanceof HTMLElement && !leftExistingDataMountEl.contains(popularStartsSectionEl)) {
-        leftExistingDataMountEl.appendChild(popularStartsSectionEl);
+      for (const section of [popularTopicsSectionEl, popularEntitiesSectionEl]) {
+        if (section instanceof HTMLElement && !leftExistingDataMountEl.contains(section)) {
+          leftExistingDataMountEl.appendChild(section);
+        }
       }
       if (!leftExistingDataMountEl.contains(existingDataPanelEl)) {
         leftExistingDataMountEl.appendChild(existingDataPanelEl);
@@ -1803,9 +2060,8 @@
         }
       }
       if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement && explorationWorkspacePanelEl instanceof HTMLElement) {
-        const next = explorationWorkspacePanelEl.nextElementSibling;
-        if (next !== relatedEntitiesWorkspacePanelEl) {
-          mainColEl.insertBefore(relatedEntitiesWorkspacePanelEl, next);
+        if (relatedEntitiesWorkspacePanelEl.nextElementSibling !== explorationWorkspacePanelEl) {
+          mainColEl.insertBefore(relatedEntitiesWorkspacePanelEl, explorationWorkspacePanelEl);
         }
       }
       if (
@@ -1813,8 +2069,8 @@
         relatedEntitiesWorkspacePanelEl instanceof HTMLElement &&
         pivotResultsWorkspacePanelEl instanceof HTMLElement
       ) {
-        if (relatedEntitiesWorkspacePanelEl.nextElementSibling !== pivotResultsWorkspacePanelEl) {
-          mainColEl.insertBefore(pivotResultsWorkspacePanelEl, relatedEntitiesWorkspacePanelEl.nextElementSibling);
+        if (explorationWorkspacePanelEl.nextElementSibling !== pivotResultsWorkspacePanelEl) {
+          mainColEl.insertBefore(pivotResultsWorkspacePanelEl, explorationWorkspacePanelEl.nextElementSibling);
         }
       }
       syncWorkspaceHeight();
@@ -1876,7 +2132,8 @@
       contentSearchResultsEl.hidden = !searchVisible;
       entityRelatedResultsEl.hidden = !searchVisible;
       entityMentionsResultsEl.hidden = !searchVisible;
-      startupExploreResultsEl.hidden = !searchVisible;
+      if (startupTopicsResultsEl instanceof HTMLElement) startupTopicsResultsEl.hidden = !searchVisible;
+      if (startupEntitiesResultsEl instanceof HTMLElement) startupEntitiesResultsEl.hidden = !searchVisible;
       if (leftExplorationMountEl instanceof HTMLElement && leftExplorationMountEl.contains(entitySearchResultsEl)) {
         entitySearchResultsEl.hidden = false;
         meetingSearchResultsEl.hidden = false;
@@ -1886,8 +2143,13 @@
       if (leftRelatedMountEl instanceof HTMLElement && leftRelatedMountEl.contains(entityRelatedResultsEl)) {
         entityRelatedResultsEl.hidden = false;
       }
-      if (leftExistingDataMountEl instanceof HTMLElement && popularStartsSectionEl instanceof HTMLElement && leftExistingDataMountEl.contains(popularStartsSectionEl)) {
-        startupExploreResultsEl.hidden = false;
+      const popularMovedLeft = leftExistingDataMountEl instanceof HTMLElement && (
+        (popularTopicsSectionEl instanceof HTMLElement && leftExistingDataMountEl.contains(popularTopicsSectionEl)) ||
+        (popularEntitiesSectionEl instanceof HTMLElement && leftExistingDataMountEl.contains(popularEntitiesSectionEl))
+      );
+      if (popularMovedLeft) {
+        if (startupTopicsResultsEl instanceof HTMLElement) startupTopicsResultsEl.hidden = false;
+        if (startupEntitiesResultsEl instanceof HTMLElement) startupEntitiesResultsEl.hidden = false;
       }
       setFacetSectionState(timelineSectionEl, { active: view === "timeline" });
       setFacetSectionState(mapSectionEl, { active: view === "map" });
@@ -1995,10 +2257,20 @@
       if (mentionsSectionTitleEl instanceof HTMLElement) {
         mentionsSectionTitleEl.textContent = hasSelectedConnection ? "Selected Edge Evidence" : "Mentions";
       }
+      if (leftEdgeEvidenceTitleEl instanceof HTMLElement) {
+        leftEdgeEvidenceTitleEl.textContent = hasSelectedConnection ? "Selected Edge Proof" : "Node Mentions";
+      }
       if (contentMatchesSectionTitleEl instanceof HTMLElement) {
         contentMatchesSectionTitleEl.textContent = hasSelectedConnection
           ? "Hidden (Connection Mode)"
           : "Evidence Search Matches (Agenda & Documents)";
+      }
+      if (leftNodeEvidencePanelEl instanceof HTMLElement) {
+        leftNodeEvidencePanelEl.hidden = hasSelectedConnection;
+      }
+      if (leftEdgeEvidencePanelEl instanceof HTMLElement) {
+        const edgeHasContent = Boolean((entityMentionsResultsEl.innerHTML || "").trim());
+        leftEdgeEvidencePanelEl.hidden = !edgeHasContent && !hasSelectedConnection;
       }
       if (pivotResultsWorkspacePanelEl instanceof HTMLElement) {
         const hasPivotContent = Boolean(
@@ -2109,6 +2381,124 @@
       syncWorkspaceHeight();
     }
 
+    function setPinnedFocusSnapshotCollapsed(collapsed) {
+      pinnedFocusSnapshotCollapsed = Boolean(collapsed);
+      if (pinnedFocusSnapshotPanelEl instanceof HTMLElement) {
+        pinnedFocusSnapshotPanelEl.classList.toggle("collapsed", pinnedFocusSnapshotCollapsed);
+      }
+      if (pinnedFocusSnapshotToggleEl instanceof HTMLElement) {
+        pinnedFocusSnapshotToggleEl.textContent = pinnedFocusSnapshotCollapsed ? "Expand" : "Collapse";
+        pinnedFocusSnapshotToggleEl.setAttribute("aria-expanded", String(!pinnedFocusSnapshotCollapsed));
+      }
+      syncWorkspaceHeight();
+    }
+
+    function renderPinnedFocusSnapshot() {
+      if (!(pinnedFocusSnapshotPanelEl instanceof HTMLElement) || !(pinnedFocusSnapshotBodyEl instanceof HTMLElement)) return;
+      const hasMeeting = Boolean(selectedMeetingContext && selectedMeetingContext.meetingId);
+      const hasEntity = Boolean(selectedEntityContext && selectedEntityContext.label);
+      const hasConnection = Boolean(selectedConnectionContext && selectedConnectionContext.fromLabel && selectedConnectionContext.toLabel);
+
+      if (!hasMeeting && !hasEntity && !hasConnection) {
+        pinnedFocusSnapshotPanelEl.hidden = true;
+        pinnedFocusSnapshotBodyEl.innerHTML = "";
+        return;
+      }
+
+      pinnedFocusSnapshotPanelEl.hidden = false;
+      if (pinnedFocusSnapshotSubEl instanceof HTMLElement) {
+        pinnedFocusSnapshotSubEl.textContent = hasConnection
+          ? "Pinned focus and selected connection while you inspect connections and evidence below."
+          : "Pinned focus details while you inspect connections and evidence below.";
+      }
+
+      const blocks = [];
+      if (hasMeeting && selectedMeetingContext) {
+        const title = selectedMeetingContext.name
+          ? `Meeting ${selectedMeetingContext.meetingId} • ${selectedMeetingContext.name}`
+          : `Meeting ${selectedMeetingContext.meetingId}`;
+        const metaBits = [selectedMeetingContext.location, selectedMeetingContext.time].filter(Boolean);
+        const stats = [
+          `agenda: ${selectedMeetingContext.agendaItemCount}`,
+          `docs: ${selectedMeetingContext.documentCount}`,
+          `entities: ${selectedMeetingContext.entityCount}`,
+          `minutes: ${selectedMeetingContext.minutesCount}`,
+        ];
+        blocks.push(`
+          <div class="focus-snapshot-card">
+            <div class="focus-snapshot-title">${escapeHtml(title)}</div>
+            <div class="focus-snapshot-meta">${escapeHtml(metaBits.join(" • ") || "Meeting metadata loaded from stored records / contextual results.")}</div>
+            <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${escapeHtml(s)}</span>`).join("")}</div>
+          </div>
+        `);
+      } else if (hasEntity && selectedEntityContext) {
+        const kindMetaSummary = summarizeKindMetadataForFocus(selectedEntityContext.entityType || "", selectedEntityContext.kindMetadata || {});
+        const bindings = Array.isArray(selectedEntityContext.bindings) ? selectedEntityContext.bindings : [];
+        const bindingSummary = bindings.slice(0, 2).map((b) => `${b.source_table}:${b.source_id}`).join(" • ");
+        const mentionCount = Number(lastEntityMentionsEntity?.mention_count || 0);
+        const relatedCount = Array.isArray(lastEntityRelatedRows) ? lastEntityRelatedRows.length : 0;
+        const stats = [
+          selectedEntityContext.entityType || "entity",
+          mentionCount ? `mentions: ${mentionCount}` : null,
+          relatedCount ? `related: ${relatedCount}` : null,
+          bindingSummary ? `bindings: ${bindingSummary}` : null,
+        ].filter(Boolean);
+        blocks.push(`
+          <div class="focus-snapshot-card">
+            <div class="focus-snapshot-title">${escapeHtml(selectedEntityContext.label || "Entity")}</div>
+            <div class="focus-snapshot-meta">${escapeHtml(kindMetaSummary.metaLine || (bindingSummary ? `Bound to ${bindingSummary}` : "Entity focus drives contextual evidence and connections."))}</div>
+            <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${escapeHtml(s)}</span>`).join("")}</div>
+          </div>
+        `);
+      }
+
+      if (hasConnection && selectedConnectionContext) {
+        const arrow = selectedConnectionContext.direction === "outgoing" ? "→" : "←";
+        const stats = [];
+        if (Number.isFinite(Number(selectedConnectionContext.evidenceCount))) stats.push(`evidence: ${Number(selectedConnectionContext.evidenceCount)}`);
+        if (Number.isFinite(Number(selectedConnectionContext.sharedMeetingCount))) stats.push(`shared meetings: ${Number(selectedConnectionContext.sharedMeetingCount)}`);
+        if (Number.isFinite(Number(selectedConnectionContext.edgeCount))) stats.push(`edges: ${Number(selectedConnectionContext.edgeCount)}`);
+        blocks.push(`
+          <div class="focus-snapshot-card">
+            <div class="focus-snapshot-connection">
+              <div class="label">Selected Connection</div>
+              <div class="focus-snapshot-meta">${escapeHtml(`${selectedConnectionContext.fromLabel} ${arrow} ${selectedConnectionContext.toLabel} (${selectedConnectionContext.relationType})`)}</div>
+              <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${escapeHtml(s)}</span>`).join("")}</div>
+            </div>
+          </div>
+        `);
+      }
+
+      pinnedFocusSnapshotBodyEl.innerHTML = blocks.join("");
+    }
+
+    function clearCurrentFocusState({ clearFocusFilters = true } = {}) {
+      clearSelectedConnection({ preserveEvidencePanel: false });
+      selectedEntityContext = { entityId: null, label: "", entityType: "", bindings: [], kindMetadata: {} };
+      selectedMeetingContext = null;
+      selectedContextMeetingId = null;
+      lastConnectionFocus = null;
+      lastEntityRelatedRows = [];
+      entityRelatedResultsEl.innerHTML = "";
+      entityMentionsResultsEl.innerHTML = "";
+      renderLeftEntityContext();
+      if (clearFocusFilters) {
+        setGlobalEntityFilter("");
+        setGlobalMeetingFilter(null);
+      }
+      if (clearFocusFilters) {
+        entitySearchResultsEl.innerHTML = "";
+        meetingSearchResultsEl.innerHTML = "";
+        contentSearchResultsEl.innerHTML = "";
+        renderTopSearchPreview(lastEntitySearchRows);
+        void loadStoredMeetingsBrowse();
+      }
+      clearSelectedMeetingDetailView();
+      updateExplorationWorkspaceVisibility();
+      updateResultsContextHeader();
+      syncWorkspaceHeight();
+    }
+
     function setSelectedEntityContext(entity) {
       const next = {
         entityId: entity?.entityId ? Number(entity.entityId) : null,
@@ -2123,6 +2513,17 @@
       selectedEntityContext = {
         ...next,
       };
+      if (selectedEntityContext.entityId && selectedEntityContext.label) {
+        pushRecentFocus({
+          kind: "entity",
+          id: selectedEntityContext.entityId,
+          label: selectedEntityContext.label,
+          entityType: selectedEntityContext.entityType,
+          normalized: entity?.normalized || "",
+          bindings: selectedEntityContext.bindings,
+          kindMetadata: selectedEntityContext.kindMetadata,
+        });
+      }
       clearSelectedMeetingDetailView();
       renderLeftEntityContext();
       updateResultsContextHeader();
@@ -2143,6 +2544,23 @@
       if (changedFocus) clearSelectedConnection({ preserveEvidencePanel: true });
       selectedMeetingContext = nextMeeting;
       selectedEntityContext = { entityId: null, label: "", entityType: "", bindings: [], kindMetadata: {} };
+      if (selectedMeetingContext && selectedMeetingContext.meetingId) {
+        pushRecentFocus({
+          kind: "meeting",
+          id: selectedMeetingContext.meetingId,
+          label: selectedMeetingContext.name
+            ? `Meeting ${selectedMeetingContext.meetingId} • ${selectedMeetingContext.name}`
+            : `Meeting ${selectedMeetingContext.meetingId}`,
+          entityType: "meeting",
+          normalized: `meeting:${selectedMeetingContext.meetingId}`,
+          bindings: [{ source_table: "meetings", source_id: selectedMeetingContext.meetingId }],
+          kindMetadata: {
+            name: selectedMeetingContext.name || "",
+            location: selectedMeetingContext.location || "",
+            time: selectedMeetingContext.time || "",
+          },
+        });
+      }
       renderLeftEntityContext();
       updateResultsContextHeader();
       if (selectedMeetingContext && selectedMeetingContext.meetingId) {
@@ -2169,6 +2587,7 @@
         if (topFocusPanelEl instanceof HTMLElement) {
           topFocusPanelEl.hidden = !hasFilters;
         }
+        if (clearCurrentFocusBtn instanceof HTMLElement) clearCurrentFocusBtn.hidden = true;
         if (focusDetailsCardEl instanceof HTMLElement) {
           if (hasFilters) {
             const filterBits = [
@@ -2197,12 +2616,14 @@
         if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = true;
         if (leftRelatedEmptyEl instanceof HTMLElement) leftRelatedEmptyEl.hidden = false;
         updateDiscoveryStartsVisibility();
+        renderPinnedFocusSnapshot();
         updateEvidencePanelMode();
         return;
       }
 
       entityContextPanelEl.hidden = !(hasEntity || hasConnection);
       if (topFocusPanelEl instanceof HTMLElement) topFocusPanelEl.hidden = false;
+      if (clearCurrentFocusBtn instanceof HTMLElement) clearCurrentFocusBtn.hidden = !(hasEntity || hasMeeting);
       if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = false;
       updateDiscoveryStartsVisibility();
       if (hasMeeting && selectedMeetingContext) {
@@ -2271,6 +2692,7 @@
             `<div class="context-row"><div class="meta">meeting ${m.meeting_id ?? "?"} • ${m.evidence_source_type}:${m.evidence_source_id} • strength: ${Number(m.strength || 0).toFixed(2)}</div>${m.mention_text ? `<div class="meta">mention: ${m.mention_text}</div>` : ""}<div class="mention-context">${m.context_text || "(no context)"}</div></div>`
           )).join("");
         }
+        renderPinnedFocusSnapshot();
         updateEvidencePanelMode();
         syncWorkspaceHeight();
         return;
@@ -2289,6 +2711,7 @@
           `<div class="context-row"><div class="meta">meeting ${m.meeting_id} • ${m.source_type} • confidence: ${Number(m.confidence || 0).toFixed(2)}</div><div class="mention-context">${m.context_text || m.mention_text || "(no context)"}</div></div>`
         )).join("");
       }
+      renderPinnedFocusSnapshot();
       updateEvidencePanelMode();
       syncWorkspaceHeight();
     }
@@ -2835,8 +3258,92 @@
       return `<div class="node-binding-row">${labels.map((s) => `<span class="node-binding-chip">${s}</span>`).join("")}</div>`;
     }
 
+    function renderTopSearchPreview(rows = []) {
+      if (!(topSearchPreviewEl instanceof HTMLElement) || !(topSearchPreviewListEl instanceof HTMLElement) || !(topSearchPreviewCountEl instanceof HTMLElement)) {
+        return;
+      }
+      const currentFocusKey = currentFocusHistoryKey();
+      const focusHistory = (recentFocusHistory || []).filter((r) => r && r.key && r.key !== currentFocusKey);
+      const previewFocusRows = focusHistory.slice(0, 4);
+      const q = (entitySearchEl.value || "").trim();
+      const fallbackRows = (Array.isArray(rows) ? rows : []).filter((row) => {
+        const rowKey = Number(row?.entity_id) ? `entity:${Number(row.entity_id)}` : "";
+        return rowKey && rowKey !== currentFocusKey;
+      }).slice(0, 3);
+
+      if (!previewFocusRows.length && (!q || !fallbackRows.length)) {
+        topSearchPreviewEl.hidden = true;
+        topSearchPreviewCountEl.textContent = "";
+        topSearchPreviewListEl.innerHTML = "";
+        if (topSearchPreviewTitleEl instanceof HTMLElement) topSearchPreviewTitleEl.textContent = "Recent Focuses";
+        return;
+      }
+
+      const renderRow = (row) => {
+        const meetingBinding = (row.bindings || []).find((b) => b.source_table === "meetings");
+        const attrs = [
+          `type="button"`,
+          `data-entity-id="${row.entity_id}"`,
+          `data-entity-type="${row.entity_type || ""}"`,
+          `data-entity-normalized="${String(row.normalized_value || "").replace(/"/g, "&quot;")}"`,
+        ];
+        if (meetingBinding && Number.isFinite(Number(meetingBinding.source_id))) {
+          attrs.push(`data-entity-meeting-id="${Number(meetingBinding.source_id)}"`);
+        }
+        const kindMeta = summarizeKindMetadataForSearchRow(row);
+        return `
+          <div class="top-search-hit">
+            <div class="hit-head">
+              <button ${attrs.join(" ")}>${escapeHtml(row.display_value || "")}</button>
+              <span class="node-result-kind">${escapeHtml(row.entity_type || "")}</span>
+            </div>
+            ${kindMeta ? `<div class="hit-meta">${escapeHtml(kindMeta)}</div>` : ""}
+          </div>
+        `;
+      };
+
+      const renderFocusHistoryItem = (item) => {
+        const attrs = [
+          `type="button"`,
+          `data-entity-id="${item.id}"`,
+          `data-entity-type="${item.entityType || ""}"`,
+        ];
+        if (item.normalized) attrs.push(`data-entity-normalized="${String(item.normalized).replace(/"/g, "&quot;")}"`);
+        const meetingBinding = (item.bindings || []).find((b) => b.source_table === "meetings");
+        if (meetingBinding && Number.isFinite(Number(meetingBinding.source_id))) {
+          attrs.push(`data-entity-meeting-id="${Number(meetingBinding.source_id)}"`);
+        }
+        const kindMeta = summarizeKindMetadataForSearchRow({
+          entity_type: item.entityType,
+          kind_metadata: item.kindMetadata,
+          bindings: item.bindings,
+        });
+        return `
+          <div class="top-search-hit">
+            <div class="hit-head">
+              <button ${attrs.join(" ")}>${escapeHtml(item.label)}</button>
+              <span class="node-result-kind">${escapeHtml(item.entityType || item.kind || "entity")}</span>
+            </div>
+            ${kindMeta ? `<div class="hit-meta">${escapeHtml(kindMeta)}</div>` : ""}
+          </div>
+        `;
+      };
+
+      const usingHistory = previewFocusRows.length > 0;
+      if (topSearchPreviewTitleEl instanceof HTMLElement) {
+        topSearchPreviewTitleEl.textContent = usingHistory ? "Recent Focuses" : "Recent Search Hits";
+      }
+      const count = usingHistory ? previewFocusRows.length : fallbackRows.length;
+      topSearchPreviewCountEl.textContent = `${count} item${count === 1 ? "" : "s"}`;
+      topSearchPreviewListEl.innerHTML = usingHistory
+        ? previewFocusRows.map(renderFocusHistoryItem).join("")
+        : fallbackRows.map(renderRow).join("");
+      topSearchPreviewEl.hidden = false;
+    }
+
     function renderEntitySearchResults(rows) {
       lastEntitySearchRows = rows || [];
+      renderTopSearchPreview(lastEntitySearchRows);
       if (!rows.length) {
         entitySearchResultsEl.innerHTML = `<div class="search-result">No matching entities found.</div>`;
         updateExplorationWorkspaceVisibility();
@@ -3007,36 +3514,34 @@
     function renderStartupExplore(payload) {
       const entities = payload?.entities || [];
       const topics = payload?.topics || [];
+      const canRenderTopics = startupTopicsResultsEl instanceof HTMLElement;
+      const canRenderEntities = startupEntitiesResultsEl instanceof HTMLElement;
+      if (!canRenderTopics || !canRenderEntities) return;
       if (!entities.length && !topics.length) {
-        startupExploreResultsEl.innerHTML = `<div class="search-result">No saved entities/topics yet. Run ingest to populate the explorer.</div>`;
+        startupTopicsResultsEl.innerHTML = `<div class="search-result">No saved topics yet. Run ingest to populate the explorer.</div>`;
+        startupEntitiesResultsEl.innerHTML = `<div class="search-result">No saved entities yet. Run ingest to populate the explorer.</div>`;
         return;
       }
-      startupExploreResultsEl.innerHTML = `
-        <div class="startup-panel">
-          <div class="entity-title">Popular Topics</div>
-          <div class="entity-list">
-            ${topics.map((t) => `<button type="button" class="entity-chip ${globalFilters.topic === t.topic ? "active" : ""}" data-topic="${t.topic}">${t.topic} (${t.count})</button>`).join("")}
-          </div>
-          <div class="entity-title" style="margin-top:10px;">Popular Entities</div>
-          <div class="entity-list">
-            ${entities.map((e) => {
-              const meetingBinding = (e.bindings || []).find((b) => b.source_table === "meetings");
-              const attrs = [
-                `type="button"`,
-                `class="entity-chip ${globalFilters.entityQuery === e.display_value ? "active" : ""}"`,
-                `data-entity-id="${e.entity_id}"`,
-                `data-entity-type="${e.entity_type || ""}"`,
-                `data-entity-seed="${String(e.display_value || "").replace(/"/g, "&quot;")}"`,
-              ];
-              if (e.normalized_value) attrs.push(`data-entity-normalized="${String(e.normalized_value).replace(/"/g, "&quot;")}"`);
-              if (meetingBinding && Number.isFinite(Number(meetingBinding.source_id))) {
-                attrs.push(`data-entity-meeting-id="${Number(meetingBinding.source_id)}"`);
-              }
-              return `<button ${attrs.join(" ")}>${e.display_value}</button>`;
-            }).join("")}
-          </div>
-        </div>
-      `;
+      startupTopicsResultsEl.innerHTML = topics.length
+        ? `<div class="startup-panel"><div class="entity-list">${topics.map((t) => `<button type="button" class="entity-chip ${globalFilters.topic === t.topic ? "active" : ""}" data-topic="${t.topic}">${t.topic} (${t.count})</button>`).join("")}</div></div>`
+        : `<div class="search-result">No popular topics yet.</div>`;
+      startupEntitiesResultsEl.innerHTML = entities.length
+        ? `<div class="startup-panel"><div class="entity-list">${entities.map((e) => {
+            const meetingBinding = (e.bindings || []).find((b) => b.source_table === "meetings");
+            const attrs = [
+              `type="button"`,
+              `class="entity-chip ${globalFilters.entityQuery === e.display_value ? "active" : ""}"`,
+              `data-entity-id="${e.entity_id}"`,
+              `data-entity-type="${e.entity_type || ""}"`,
+              `data-entity-seed="${String(e.display_value || "").replace(/"/g, "&quot;")}"`,
+            ];
+            if (e.normalized_value) attrs.push(`data-entity-normalized="${String(e.normalized_value).replace(/"/g, "&quot;")}"`);
+            if (meetingBinding && Number.isFinite(Number(meetingBinding.source_id))) {
+              attrs.push(`data-entity-meeting-id="${Number(meetingBinding.source_id)}"`);
+            }
+            return `<button ${attrs.join(" ")}>${e.display_value}</button>`;
+          }).join("")}</div></div>`
+        : `<div class="search-result">No popular entities yet.</div>`;
       syncWorkspaceHeight();
     }
 
@@ -3290,7 +3795,9 @@
         if (!res.ok) throw new Error(`Explore load failed (${res.status})`);
         renderStartupExplore(await res.json());
       } catch (err) {
-        startupExploreResultsEl.innerHTML = `<div class="search-result">${err.message || "Unable to load explorer seed data."}</div>`;
+        const msg = err.message || "Unable to load explorer seed data.";
+        if (startupTopicsResultsEl instanceof HTMLElement) startupTopicsResultsEl.innerHTML = `<div class="search-result">${msg}</div>`;
+        if (startupEntitiesResultsEl instanceof HTMLElement) startupEntitiesResultsEl.innerHTML = `<div class="search-result">${msg}</div>`;
       }
     }
 
@@ -3466,6 +3973,7 @@
         entityRelatedResultsEl.innerHTML = "";
         entityMentionsResultsEl.innerHTML = "";
         lastEntitySearchRows = [];
+        renderTopSearchPreview([]);
         lastEntityRelatedRows = [];
         setGlobalEntityFilter("");
         void loadStoredMeetingsBrowse();
@@ -3519,6 +4027,7 @@
         meetingSearchResultsEl.innerHTML = "";
         contentSearchResultsEl.innerHTML = "";
         lastEntitySearchRows = [];
+        renderTopSearchPreview([]);
         lastEntityRelatedRows = [];
         renderLeftEntityContext();
         updateExplorationWorkspaceVisibility();
@@ -3646,12 +4155,19 @@
         updateExplorationWorkspaceVisibility();
       });
     }
+    if (clearCurrentFocusBtn instanceof HTMLElement) {
+      clearCurrentFocusBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        clearCurrentFocusState({ clearFocusFilters: true });
+      });
+    }
     clearAllFiltersBtn.addEventListener("click", async () => {
       setGlobalTopicFilter("");
       setGlobalEntityFilter("");
       setGlobalEntityTypeFilter("");
       setGlobalMeetingFilter(null);
       lastEntitySearchRows = [];
+      renderTopSearchPreview([]);
       topicEl.value = "";
       entitySearchEl.value = "";
       renderSuggestions([]);
@@ -3689,6 +4205,12 @@
         setMeetingDetailCollapsed(!meetingDetailCollapsed);
       });
       setMeetingDetailCollapsed(false);
+    }
+    if (pinnedFocusSnapshotToggleEl instanceof HTMLElement) {
+      pinnedFocusSnapshotToggleEl.addEventListener("click", () => {
+        setPinnedFocusSnapshotCollapsed(!pinnedFocusSnapshotCollapsed);
+      });
+      setPinnedFocusSnapshotCollapsed(false);
     }
     loadRuntimeDiagnostics();
     loadStartupExplore();
@@ -3782,11 +4304,29 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (!target.classList.contains("chip")) return;
+      if (!target.dataset.topic) return;
 
       const topic = target.dataset.topic || "";
       setGlobalTopicFilter(topic);
       updateResultsContextHeader();
       rerunTopicOnly(topic);
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const jumpBtn = target.closest("[data-flow-jump-target]");
+      if (!(jumpBtn instanceof HTMLElement)) return;
+      const jumpTarget = String(jumpBtn.dataset.flowJumpTarget || "");
+      const targetMap = {
+        connect: relatedEntitiesWorkspacePanelEl,
+        evidence: explorationWorkspacePanelEl,
+        pivot: pivotResultsWorkspacePanelEl,
+      };
+      const panel = targetMap[jumpTarget];
+      if (!(panel instanceof HTMLElement) || !(mainColEl instanceof HTMLElement)) return;
+      const top = Math.max(0, panel.offsetTop - 8);
+      mainColEl.scrollTo({ top, behavior: "smooth" });
     });
 
     document.addEventListener("click", (event) => {
