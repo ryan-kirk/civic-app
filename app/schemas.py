@@ -58,6 +58,7 @@ class EntitySummaryOut(BaseModel):
     display_value: str
     normalized_value: str
     mention_count: int
+    kind_metadata: dict[str, str] = Field(default_factory=dict)
     bindings: List[EntityBindingOut] = Field(default_factory=list)
     mentions: List[EntityMentionOut] = Field(default_factory=list)
 
@@ -81,6 +82,7 @@ class EntityConnectionOut(BaseModel):
     edge_count: int
     evidence_count: int
     shared_meeting_count: int
+    kind_metadata: dict[str, str] = Field(default_factory=dict)
     bindings: List[EntityBindingOut] = Field(default_factory=list)
 
 

@@ -15,9 +15,14 @@ from app.models import (
     AgendaItem,
     Document,
     Entity,
+    EntityAlias,
     EntityBinding,
     EntityConnection,
+    EntityDateValue,
     EntityMention,
+    EntityOrganization,
+    EntityPerson,
+    EntityPlace,
     Meeting,
     MeetingMinutesMetadata,
     MeetingRangeDiscoveryCache,
@@ -64,6 +69,84 @@ def _entity_binding_out_rows(db: Session, entity_id: int) -> list[EntityBindingO
         .all()
     )
     return [EntityBindingOut(source_table=row.source_table, source_id=int(row.source_id)) for row in rows]
+
+
+def _entity_kind_metadata_map(
+    db: Session,
+    entity: Entity,
+    *,
+    bindings: list[EntityBindingOut] | None = None,
+) -> dict[str, str]:
+    etype = (entity.entity_type or "").lower()
+    out: dict[str, str] = {}
+    binding_rows = bindings if bindings is not None else _entity_binding_out_rows(db, int(entity.id))
+
+    if etype == "person":
+        row = db.query(EntityPerson).filter(EntityPerson.entity_id == entity.id).one_or_none()
+        if row:
+            if row.full_name:
+                out["full_name"] = normalize_text(row.full_name)
+            if row.first_name:
+                out["first_name"] = normalize_text(row.first_name)
+            if row.last_name:
+                out["last_name"] = normalize_text(row.last_name)
+    elif etype in {"address", "zip_code"}:
+        row = db.query(EntityPlace).filter(EntityPlace.entity_id == entity.id).one_or_none()
+        if row:
+            if row.address_text:
+                out["address"] = normalize_text(row.address_text)
+            if row.city_hint:
+                out["city"] = normalize_text(row.city_hint)
+            if row.state_hint:
+                out["state"] = normalize_text(row.state_hint)
+            if row.zip_hint:
+                out["zip"] = normalize_text(row.zip_hint)
+    elif etype == "organization":
+        row = db.query(EntityOrganization).filter(EntityOrganization.entity_id == entity.id).one_or_none()
+        if row:
+            if row.name_text:
+                out["name"] = normalize_text(row.name_text)
+            if row.legal_suffix:
+                out["suffix"] = normalize_text(row.legal_suffix)
+        alias_count = (
+            db.query(func.count(EntityAlias.id))
+            .filter(EntityAlias.entity_id == entity.id)
+            .scalar()
+            or 0
+        )
+        if alias_count:
+            out["aliases"] = str(int(alias_count))
+    elif etype == "date":
+        row = db.query(EntityDateValue).filter(EntityDateValue.entity_id == entity.id).one_or_none()
+        if row:
+            if row.date_iso:
+                out["date_iso"] = normalize_text(row.date_iso)
+            if row.label_text:
+                out["label"] = normalize_text(row.label_text)
+    elif etype == "meeting":
+        meeting_binding = next((b for b in binding_rows if b.source_table == "meetings"), None)
+        if meeting_binding:
+            meeting = db.get(Meeting, int(meeting_binding.source_id))
+            if meeting:
+                out["meeting_id"] = str(int(meeting.meeting_id))
+                if meeting.name:
+                    out["name"] = normalize_text(meeting.name)
+                if meeting.location:
+                    out["location"] = normalize_text(meeting.location)
+                if meeting.time:
+                    out["time"] = normalize_text(meeting.time)
+                if meeting.date:
+                    out["date"] = normalize_text(meeting.date)
+    elif etype == "document":
+        doc_binding = next((b for b in binding_rows if b.source_table == "documents"), None)
+        if doc_binding:
+            doc = db.get(Document, int(doc_binding.source_id))
+            if doc:
+                out["meeting_id"] = str(int(doc.meeting_id))
+                out["document_id"] = str(int(doc.document_id))
+                if doc.title:
+                    out["title"] = normalize_text(doc.title)
+    return out
 
 
 @router.get("/health")
@@ -191,16 +274,20 @@ def explore_coverage(db: Session = Depends(get_db)):
 @router.get("/entities/suggest", response_model=list[EntitySuggestOut])
 def suggest_entities(
     q: str = Query(..., min_length=1),
+    entity_type: str | None = Query(default=None),
     limit: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
 ):
     needle = normalize_text(q).lower()
+    entity_type_norm = normalize_text(entity_type or "").lower()
     tokens = [t for t in needle.replace(",", " ").split() if t]
 
     # Pull a manageable candidate pool, then score in Python for loose matches.
     candidates = db.query(Entity).order_by(Entity.id.desc()).limit(5000).all()
     scored: list[tuple[float, Entity]] = []
     for entity in candidates:
+        if entity_type_norm and (entity.entity_type or "").lower() != entity_type_norm:
+            continue
         text = (entity.display_value or "").lower()
         if not text:
             continue
@@ -423,13 +510,15 @@ def get_meeting_entities(
         if entity.id not in grouped:
             if len(grouped) >= limit:
                 continue
+            bindings = _entity_binding_out_rows(db, entity.id)
             grouped[entity.id] = EntitySummaryOut(
                 entity_id=entity.id,
                 entity_type=entity.entity_type,
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=0,
-                bindings=_entity_binding_out_rows(db, entity.id),
+                kind_metadata=_entity_kind_metadata_map(db, entity, bindings=bindings),
+                bindings=bindings,
                 mentions=[],
             )
         summary = grouped[entity.id]
@@ -465,6 +554,7 @@ def search_entities(
 
     out: list[EntitySummaryOut] = []
     for entity in entities:
+        bindings = _entity_binding_out_rows(db, entity.id)
         total_mentions = (
             db.query(func.count(EntityMention.id))
             .filter(EntityMention.entity_id == entity.id)
@@ -485,7 +575,8 @@ def search_entities(
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=int(total_mentions),
-                bindings=_entity_binding_out_rows(db, entity.id),
+                kind_metadata=_entity_kind_metadata_map(db, entity, bindings=bindings),
+                bindings=bindings,
                 mentions=[
                     EntityMentionOut(
                         meeting_id=m.meeting_id,
@@ -518,6 +609,7 @@ def get_entity_detail(
             display_value="",
             normalized_value="",
             mention_count=0,
+            kind_metadata={},
             bindings=[],
             mentions=[],
         )
@@ -534,13 +626,15 @@ def get_entity_detail(
         .limit(mention_limit)
         .all()
     )
+    bindings = _entity_binding_out_rows(db, entity.id)
     return EntitySummaryOut(
         entity_id=entity.id,
         entity_type=entity.entity_type,
         display_value=entity.display_value,
         normalized_value=entity.normalized_value,
         mention_count=int(total_mentions),
-        bindings=_entity_binding_out_rows(db, entity.id),
+        kind_metadata=_entity_kind_metadata_map(db, entity, bindings=bindings),
+        bindings=bindings,
         mentions=[
             EntityMentionOut(
                 meeting_id=m.meeting_id,
@@ -688,6 +782,7 @@ def get_entity_connections(
         if not other:
             continue
         bucket = buckets[key]
+        bindings = _entity_binding_out_rows(db, other.id)
         out.append(
             EntityConnectionOut(
                 entity_id=other.id,
@@ -699,7 +794,8 @@ def get_entity_connections(
                 edge_count=int(bucket["edge_count"]),
                 evidence_count=int(bucket["evidence_count"]),
                 shared_meeting_count=len(bucket["meeting_ids"]),
-                bindings=_entity_binding_out_rows(db, other.id),
+                kind_metadata=_entity_kind_metadata_map(db, other, bindings=bindings),
+                bindings=bindings,
             )
         )
     return out
@@ -847,6 +943,7 @@ def explore_popular(
 
     entities_out: list[EntitySummaryOut] = []
     for entity, count in top_entities:
+        bindings = _entity_binding_out_rows(db, entity.id)
         mentions = (
             db.query(EntityMention)
             .filter(EntityMention.entity_id == entity.id)
@@ -861,7 +958,8 @@ def explore_popular(
                 display_value=entity.display_value,
                 normalized_value=entity.normalized_value,
                 mention_count=int(count or 0),
-                bindings=_entity_binding_out_rows(db, entity.id),
+                kind_metadata=_entity_kind_metadata_map(db, entity, bindings=bindings),
+                bindings=bindings,
                 mentions=[
                     EntityMentionOut(
                         meeting_id=m.meeting_id,
