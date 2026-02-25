@@ -204,6 +204,9 @@ Current topic focus:
 - `zoning`
 - `ordinances_general`
 - `public_hearings`
+- `schools`
+- `public_safety`
+- `enforcement`
 - `contracts_procurement`
 - `budget_finance`
 - `infrastructure_transport`

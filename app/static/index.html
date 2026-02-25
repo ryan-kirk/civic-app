@@ -39,11 +39,18 @@
       grid-template-rows: auto auto minmax(0, 1fr);
       gap: 12px;
     }
-    .hero { margin-bottom: 18px; }
-    .hero h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: .02em; }
-    .hero p { margin: 8px 0 0; color: var(--muted); max-width: 78ch; }
+    .hero {
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: end;
+      gap: 6px 16px;
+    }
+    .hero h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: .02em; line-height: 1.05; }
+    .hero p { margin: 0; color: var(--muted); max-width: none; line-height: 1.25; }
     .hero-note {
-      margin-top: 10px;
+      grid-column: 1 / -1;
+      margin-top: 2px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
@@ -122,18 +129,41 @@
       box-shadow: 0 10px 25px rgba(0,0,0,.04);
     }
     .top-explorer-controls {
-      padding: 10px 12px;
+      padding: 10px 12px 10px 12px;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: start;
       gap: 8px;
     }
+    .top-explorer-controls.compact {
+      gap: 6px;
+      padding: 8px 10px 8px 10px;
+    }
     .top-explorer-controls > * { min-width: 0; }
+    .top-panel-compact-toggle {
+      position: static;
+      z-index: 1;
+      grid-column: 1 / -1;
+      justify-self: end;
+      align-self: start;
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      margin-bottom: 2px;
+    }
+    .top-panel-compact-toggle:hover { transform: none; background: #fbfaf6; }
     .top-filter-stack {
       display: grid;
       gap: 10px;
       align-content: start;
     }
+    .top-explorer-controls.compact .top-filter-stack { gap: 6px; }
     .top-search-panel {
       margin: 0;
       background: #fff;
@@ -156,6 +186,12 @@
       letter-spacing: .03em;
     }
     .top-search-panel .hint { margin: 0; }
+    .top-explorer-controls.compact .top-search-panel .hint { display: none; }
+    .top-explorer-controls.compact .top-search-preview { display: none !important; }
+    .top-explorer-controls.compact .top-search-panel,
+    .top-explorer-controls.compact .filter-bar,
+    .top-explorer-controls.compact .facet-mini-panel,
+    .top-explorer-controls.compact .top-focus-panel { padding: 8px; }
     .top-search-preview {
       border-top: 1px solid #ece5d7;
       padding-top: 6px;
@@ -249,6 +285,26 @@
       color: #45504b;
       line-height: 1.3;
     }
+    .top-explorer-controls.compact .top-focus-panel .top-focus-sub { display: none; }
+    .top-explorer-controls.compact .top-focus-panel { gap: 4px; }
+    .top-explorer-controls.compact .top-focus-panel .focus-card {
+      padding: 8px;
+    }
+    .top-explorer-controls.compact .top-focus-panel .focus-card .focus-card-meta,
+    .top-explorer-controls.compact .top-focus-panel .focus-card .focus-card-stats {
+      display: none;
+    }
+    .top-explorer-controls.compact .top-focus-panel #topSelectedConnectionPanel .focus-card-actions {
+      display: none;
+    }
+    .top-explorer-controls.compact .top-focus-panel #topSelectedConnectionSub {
+      font-size: .78rem;
+      line-height: 1.2;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
     .top-explorer-controls .top-focus-panel .focus-card {
       margin: 0;
       background: #fff;
@@ -285,15 +341,18 @@
     .top-explorer-controls .filter-bar-head { margin-bottom: 6px; }
     .top-explorer-controls .filter-chip-row { min-height: 1.2rem; }
     .top-explorer-controls .filter-empty { line-height: 1.25; }
+    .top-explorer-controls.compact .filter-empty { display: none; }
     .top-explorer-controls .entity-panel-header {
       border-bottom: 0;
       padding-bottom: 0;
     }
     .top-explorer-controls .entity-panel-header .sub {
-      font-size: .78rem;
-      line-height: 1.25;
-      margin-bottom: 6px;
+      font-size: .75rem;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      color: #666f69;
     }
+    .top-explorer-controls.compact .entity-panel-header .sub { display: none; }
     .top-explorer-controls .facet-control-grid {
       display: grid;
       gap: 8px;
@@ -306,6 +365,7 @@
       display: grid;
       gap: 6px;
     }
+    .top-explorer-controls.compact .facet-mini-panel { gap: 4px; }
     .top-explorer-controls .facet-mini-title {
       margin: 0;
       font-size: .68rem;
@@ -1392,13 +1452,85 @@
       letter-spacing: .05em;
       font-weight: 700;
     }
+    .focus-snapshot-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .focus-snapshot-actions button {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .focus-snapshot-actions button:hover { transform: none; background: #fbfaf6; }
+    .focus-snapshot-preview {
+      border: 1px dashed #e7e1d6;
+      border-radius: 8px;
+      background: #fcfbf7;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+    }
+    .focus-snapshot-preview-section {
+      display: grid;
+      gap: 4px;
+    }
+    .focus-snapshot-preview-title {
+      font-size: .72rem;
+      color: #6a736d;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
+    .focus-snapshot-preview-list {
+      display: grid;
+      gap: 3px;
+    }
+    .focus-snapshot-preview-list .row {
+      font-size: .79rem;
+      color: #2e3532;
+      line-height: 1.25;
+    }
+    .focus-snapshot-preview-list .row a {
+      color: #0b4d5f;
+      text-decoration: none;
+    }
+    .focus-snapshot-preview-list .row a:hover { text-decoration: underline; }
     .exploration-panel, .meeting-master-detail, .related {
       scroll-margin-top: 48px;
+    }
+
+    body.top-compact .wrap {
+      gap: 8px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    body.top-compact .hero {
+      margin-bottom: 0;
+      gap: 4px 12px;
+    }
+    body.top-compact .hero h1 {
+      font-size: clamp(1.45rem, 3.2vw, 2rem);
+    }
+    body.top-compact .hero p {
+      font-size: .84rem;
+      line-height: 1.2;
+      max-width: 42ch;
+    }
+    body.top-compact .hero-note {
+      display: none;
     }
 
     @media (max-width: 900px) {
       body { overflow: auto; }
       .wrap { height: auto; min-height: 100vh; display: block; padding: 24px 16px 48px; }
+      .hero { grid-template-columns: 1fr; align-items: start; gap: 6px; }
+      .hero-note { margin-top: 4px; }
       .top-explorer-controls { grid-template-columns: 1fr; }
       .top-explorer-controls .controls-row { grid-template-columns: 1fr; }
       .top-filter-stack { grid-template-columns: 1fr; }
@@ -1432,6 +1564,7 @@
       <div class="filter-empty">Filters apply across meeting results and entity discovery.</div>
     </section>
     <section id="topExplorerControlsPanel" class="panel top-explorer-controls">
+      <button id="topExplorerCompactToggle" type="button" class="top-panel-compact-toggle" aria-expanded="true">Compact</button>
       <div id="topSearchMount"></div>
       <div id="topFilterCol" class="top-filter-stack">
         <div id="topFilterMount"></div>
@@ -1517,6 +1650,9 @@
               <option value="zoning">zoning</option>
               <option value="ordinances_general">ordinances_general</option>
               <option value="public_hearings">public_hearings</option>
+              <option value="schools">schools</option>
+              <option value="public_safety">public_safety</option>
+              <option value="enforcement">enforcement</option>
               <option value="contracts_procurement">contracts_procurement</option>
               <option value="budget_finance">budget_finance</option>
               <option value="infrastructure_transport">infrastructure_transport</option>
@@ -1662,16 +1798,16 @@
           <div id="entityExplorerControlsBlock">
           <div class="entity-panel-header">
             <div class="entity-title">Graph Filters</div>
-            <div class="sub">Set node filters and topical lenses. Search and focus happen in the top strip; facets and graph management stay in this panel.</div>
+            <div class="sub">Set node/topic filters here. Presets may apply a topic filter or seed search; focus stays in the top strip.</div>
             <div class="facet-control-grid">
               <div class="facet-mini-panel">
-                <div class="facet-mini-title">Topic Lenses</div>
+                <div class="facet-mini-title">Lens Presets</div>
                 <div class="lens-row">
-                  <button type="button" class="lens-btn" data-quick-topic="zoning">Zoning</button>
-                  <button type="button" class="lens-btn" data-quick-query="school">Schools</button>
-                  <button type="button" class="lens-btn" data-quick-query="police">Public Safety</button>
-                  <button type="button" class="lens-btn" data-quick-query="code enforcement">Enforcement</button>
-                  <button type="button" class="lens-btn" data-quick-query="development">Development</button>
+                  <button type="button" class="lens-btn" data-quick-topic="zoning" title="Applies topic filter: zoning">Zoning</button>
+                  <button type="button" class="lens-btn" data-quick-topic="schools" title="Applies topic filter: schools">Schools</button>
+                  <button type="button" class="lens-btn" data-quick-topic="public_safety" title="Applies topic filter: public_safety">Public Safety</button>
+                  <button type="button" class="lens-btn" data-quick-topic="enforcement" title="Applies topic filter: enforcement">Enforcement</button>
+                  <button type="button" class="lens-btn" data-quick-query="development" title="Seeds entity search: development">Development</button>
                 </div>
               </div>
               <div class="facet-mini-panel">
@@ -1714,7 +1850,7 @@
           <div id="facetViewsSidebarPanel" class="sidebar-section facet-active">
             <div class="sidebar-section-title">Facet Panels</div>
             <div class="view-tabs facet-view-tabs">
-              <button id="tabSearch" type="button" class="tab-btn facet-shortcut-btn active">Open Search</button>
+              <button id="tabSearch" type="button" class="tab-btn facet-shortcut-btn active">Scroll Up</button>
               <button id="tabTimeline" type="button" class="tab-btn facet-shortcut-btn">Open Time</button>
               <button id="tabMap" type="button" class="tab-btn facet-shortcut-btn">Open Places</button>
             </div>
@@ -1825,6 +1961,8 @@
     const topFilterControlsMountEl = document.getElementById("topFilterControlsMount");
     const topFilterMountEl = document.getElementById("topFilterMount");
     const topSearchMountEl = document.getElementById("topSearchMount");
+    const topExplorerControlsPanelEl = document.getElementById("topExplorerControlsPanel");
+    const topExplorerCompactToggleEl = document.getElementById("topExplorerCompactToggle");
     const filterBarPanelEl = document.getElementById("filterBarPanel");
     const entitySearchControlBlockEl = document.getElementById("entitySearchControlBlock");
     const topSearchPreviewEl = document.getElementById("topSearchPreview");
@@ -1888,6 +2026,8 @@
     let lastConnectionFocus = null;
     let meetingDetailCollapsed = false;
     let pinnedFocusSnapshotCollapsed = false;
+    let focusSnapshotMeetingPreviewCollapsed = false;
+    let topExplorerCompact = false;
     let recentFocusHistory = [];
     const globalFilters = {
       topic: "",
@@ -2175,13 +2315,7 @@
       if (globalFilters.entityType) {
         chips.push(`<span class="filter-chip entity">Kind: ${globalFilters.entityType}<button type="button" data-remove-filter="entityType">x</button></span>`);
       }
-      if (globalFilters.entityQuery) {
-        chips.push(`<span class="filter-chip entity">Entity: ${globalFilters.entityQuery}<button type="button" data-remove-filter="entityQuery">x</button></span>`);
-      }
-      if (globalFilters.meetingId) {
-        chips.push(`<span class="filter-chip meeting">Meeting: ${globalFilters.meetingId}<button type="button" data-remove-filter="meetingId">x</button></span>`);
-      }
-      activeFilterChipsEl.innerHTML = chips.join("") || `<span class="filter-empty">No filters selected.</span>`;
+      activeFilterChipsEl.innerHTML = chips.join("") || `<span class="filter-empty">No global filters selected. Focused entities and meetings are pinned in Current Focus / Focus Snapshot.</span>`;
       clearAllFiltersBtn.hidden = chips.length === 0;
       syncWorkspaceHeight();
     }
@@ -2393,6 +2527,26 @@
       syncWorkspaceHeight();
     }
 
+    function setFocusSnapshotMeetingPreviewCollapsed(collapsed) {
+      focusSnapshotMeetingPreviewCollapsed = Boolean(collapsed);
+      renderPinnedFocusSnapshot();
+    }
+
+    function setTopExplorerCompact(collapsed) {
+      topExplorerCompact = Boolean(collapsed);
+      if (topExplorerControlsPanelEl instanceof HTMLElement) {
+        topExplorerControlsPanelEl.classList.toggle("compact", topExplorerCompact);
+      }
+      if (document.body instanceof HTMLElement) {
+        document.body.classList.toggle("top-compact", topExplorerCompact);
+      }
+      if (topExplorerCompactToggleEl instanceof HTMLElement) {
+        topExplorerCompactToggleEl.textContent = topExplorerCompact ? "Expand" : "Compact";
+        topExplorerCompactToggleEl.setAttribute("aria-expanded", String(!topExplorerCompact));
+      }
+      syncWorkspaceHeight();
+    }
+
     function renderPinnedFocusSnapshot() {
       if (!(pinnedFocusSnapshotPanelEl instanceof HTMLElement) || !(pinnedFocusSnapshotBodyEl instanceof HTMLElement)) return;
       const hasMeeting = Boolean(selectedMeetingContext && selectedMeetingContext.meetingId);
@@ -2413,6 +2567,11 @@
       }
 
       const blocks = [];
+      const focusedMeetingResult = (hasMeeting && selectedMeetingContext)
+        ? (Array.isArray(lastMeetingResults)
+          ? lastMeetingResults.find((r) => Number(r.meetingId) === Number(selectedMeetingContext.meetingId)) || null
+          : null)
+        : null;
       if (hasMeeting && selectedMeetingContext) {
         const title = selectedMeetingContext.name
           ? `Meeting ${selectedMeetingContext.meetingId} • ${selectedMeetingContext.name}`
@@ -2424,11 +2583,63 @@
           `entities: ${selectedMeetingContext.entityCount}`,
           `minutes: ${selectedMeetingContext.minutesCount}`,
         ];
+        const previewHtml = (() => {
+          if (focusSnapshotMeetingPreviewCollapsed) return "";
+          if (!focusedMeetingResult) {
+            return `<div class="focus-snapshot-preview"><div class="focus-snapshot-preview-section"><div class="focus-snapshot-preview-title">Meeting Detail Preview</div><div class="row meta">Meeting detail preview will appear after contextual meeting data loads.</div></div></div>`;
+          }
+          const agendaItems = Array.isArray(focusedMeetingResult.agendaItems) ? focusedMeetingResult.agendaItems : [];
+          const minutesRows = Array.isArray(focusedMeetingResult.minutesMetadata) ? focusedMeetingResult.minutesMetadata : [];
+          const docs = [];
+          const seenDocs = new Set();
+          for (const item of agendaItems) {
+            for (const d of (item.documents || [])) {
+              const key = `${d.document_id}:${d.url}`;
+              if (seenDocs.has(key)) continue;
+              seenDocs.add(key);
+              docs.push(d);
+            }
+          }
+          const topAgenda = agendaItems.slice(0, 4);
+          const topDocs = docs.slice(0, 4);
+          const topMinutes = minutesRows.slice(0, 3);
+          return `
+            <div class="focus-snapshot-preview">
+              <div class="focus-snapshot-preview-section">
+                <div class="focus-snapshot-preview-title">Agenda Preview (${agendaItems.length})</div>
+                <div class="focus-snapshot-preview-list">
+                  ${topAgenda.length ? topAgenda.map((item) => `<div class="row"><strong>${escapeHtml(item.item_key || "")}</strong> ${escapeHtml(item.title || "")}</div>`).join("") : `<div class="row meta">No agenda items loaded.</div>`}
+                  ${agendaItems.length > topAgenda.length ? `<div class="row meta">...and ${agendaItems.length - topAgenda.length} more agenda item(s)</div>` : ""}
+                </div>
+              </div>
+              <div class="focus-snapshot-preview-section">
+                <div class="focus-snapshot-preview-title">Documents (${docs.length})</div>
+                <div class="focus-snapshot-preview-list">
+                  ${topDocs.length ? topDocs.map((d) => `<div class="row"><a href="${d.url}" target="_blank" rel="noreferrer">${escapeHtml(d.title || `document ${d.document_id}`)}</a></div>`).join("") : `<div class="row meta">No documents loaded.</div>`}
+                  ${docs.length > topDocs.length ? `<div class="row meta">...and ${docs.length - topDocs.length} more document(s)</div>` : ""}
+                </div>
+              </div>
+              <div class="focus-snapshot-preview-section">
+                <div class="focus-snapshot-preview-title">Minutes Metadata (${minutesRows.length})</div>
+                <div class="focus-snapshot-preview-list">
+                  ${topMinutes.length ? topMinutes.map((m) => `<div class="row">${escapeHtml(m.title || `doc ${m.document_id}`)}${m.status ? ` <span class="meta">(status: ${escapeHtml(m.status)})</span>` : ""}</div>`).join("") : `<div class="row meta">No minutes metadata loaded.</div>`}
+                  ${minutesRows.length > topMinutes.length ? `<div class="row meta">...and ${minutesRows.length - topMinutes.length} more minute document(s)</div>` : ""}
+                </div>
+              </div>
+            </div>
+          `;
+        })();
         blocks.push(`
           <div class="focus-snapshot-card">
             <div class="focus-snapshot-title">${escapeHtml(title)}</div>
             <div class="focus-snapshot-meta">${escapeHtml(metaBits.join(" • ") || "Meeting metadata loaded from stored records / contextual results.")}</div>
             <div class="focus-card-stats">${stats.map((s) => `<span class="focus-stat">${escapeHtml(s)}</span>`).join("")}</div>
+            <div class="focus-snapshot-actions">
+              <button type="button" data-snapshot-preview-toggle="1">${focusSnapshotMeetingPreviewCollapsed ? "Show Focused Meeting Preview" : "Hide Focused Meeting Preview"}</button>
+              <button type="button" data-snapshot-meeting-toggle="1">${meetingDetailCollapsed ? "Expand Full Meeting Detail" : "Collapse Full Meeting Detail"}</button>
+              <button type="button" data-snapshot-jump-detail="1">Jump To Full Meeting Detail</button>
+            </div>
+            ${previewHtml}
           </div>
         `);
       } else if (hasEntity && selectedEntityContext) {
@@ -2470,6 +2681,7 @@
       }
 
       pinnedFocusSnapshotBodyEl.innerHTML = blocks.join("");
+      syncWorkspaceHeight();
     }
 
     function clearCurrentFocusState({ clearFocusFilters = true } = {}) {
@@ -3334,7 +3546,9 @@
         topSearchPreviewTitleEl.textContent = usingHistory ? "Recent Focuses" : "Recent Search Hits";
       }
       const count = usingHistory ? previewFocusRows.length : fallbackRows.length;
-      topSearchPreviewCountEl.textContent = `${count} item${count === 1 ? "" : "s"}`;
+      topSearchPreviewCountEl.textContent = usingHistory
+        ? `Showing last ${count} item${count === 1 ? "" : "s"}`
+        : `${count} item${count === 1 ? "" : "s"}`;
       topSearchPreviewListEl.innerHTML = usingHistory
         ? previewFocusRows.map(renderFocusHistoryItem).join("")
         : fallbackRows.map(renderRow).join("");
@@ -3551,9 +3765,43 @@
         syncWorkspaceHeight();
         return;
       }
-      timelineResultsEl.innerHTML = `<div class="search-subtitle">Time Facet (date entities)</div>` + rows.map((row) => (
-        `<div class="search-result"><div><strong>${row.label}</strong></div><div class="meta">normalized date: ${row.date} • meetings: ${row.meeting_ids.join(", ")} • mentions: ${row.entity_count}</div></div>`
-      )).join("");
+      timelineResultsEl.innerHTML = `<div class="search-subtitle">Time Facet (date entities)</div>` + rows.map((row) => {
+        const entityId = Number(row.entity_id || 0);
+        const meetingIds = Array.isArray(row.meeting_ids) ? row.meeting_ids : [];
+        const isConnectionSelected = Boolean(
+          selectedConnectionContext &&
+          Number(selectedConnectionContext.toEntityId || 0) === entityId
+        );
+        const isFocusedDate = Boolean(
+          !selectedConnectionContext &&
+          selectedEntityContext &&
+          Number(selectedEntityContext.entityId || 0) === entityId
+        );
+        const rowClasses = ["search-result"];
+        if (isConnectionSelected) rowClasses.push("related", "active-edge");
+        else if (isFocusedDate) rowClasses.push("active");
+        const relationMatch = Array.isArray(lastEntityRelatedRows)
+          ? lastEntityRelatedRows.find((r) => Number(r.entity_id) === entityId && Object.prototype.hasOwnProperty.call(r, "relation_type"))
+          : null;
+        const relationHint = relationMatch
+          ? ` • connected: ${escapeHtml(String(relationMatch.relation_type || ""))} (${escapeHtml(String(relationMatch.direction || ""))})`
+          : "";
+        return `
+          <div class="${rowClasses.join(" ")}">
+            <div class="node-result-head">
+              <button
+                type="button"
+                data-timeline-entity-id="${entityId}"
+                data-timeline-entity-label="${String(row.label || "").replace(/"/g, "&quot;")}"
+                data-timeline-entity-date="${String(row.date || "").replace(/"/g, "&quot;")}"
+                data-timeline-meeting-ids="${meetingIds.join(",")}"
+              >${escapeHtml(row.label || "")}</button>
+              <span class="node-result-kind">date</span>
+            </div>
+            <div class="meta">normalized date: ${escapeHtml(String(row.date || ""))} • meetings: ${meetingIds.join(", ")} • mentions: ${Number(row.entity_count || 0)}${relationHint}</div>
+          </div>
+        `;
+      }).join("");
       syncWorkspaceHeight();
     }
 
@@ -3571,6 +3819,22 @@
 
     function openFacetPanel(sectionEl) {
       setFacetSectionState(sectionEl, { active: true, expand: true, scrollIntoView: true });
+    }
+
+    function toggleFacetPanelShortcut(view, sectionEl) {
+      if (!(sectionEl instanceof HTMLElement)) return false;
+      const sameView = activeSidebarView === view;
+      const isOpen = !sectionEl.classList.contains("collapsed");
+      if (sameView && isOpen) {
+        sectionEl.classList.add("collapsed");
+        sectionEl.classList.remove("facet-active");
+        setSidebarView("search");
+        syncWorkspaceHeight();
+        return true;
+      }
+      setSidebarView(view);
+      openFacetPanel(sectionEl);
+      return false;
     }
 
     async function loadTimelineView() {
@@ -4191,13 +4455,13 @@
       }
     });
     tabTimelineEl.addEventListener("click", async () => {
-      setSidebarView("timeline");
-      openFacetPanel(timelineSectionEl);
+      const closed = toggleFacetPanelShortcut("timeline", timelineSectionEl);
+      if (closed) return;
       try { await loadTimelineView(); } catch (err) { timelineResultsEl.innerHTML = `<div class="search-result">${err.message || "Timeline load failed."}</div>`; }
     });
     tabMapEl.addEventListener("click", async () => {
-      setSidebarView("map");
-      openFacetPanel(mapSectionEl);
+      const closed = toggleFacetPanelShortcut("map", mapSectionEl);
+      if (closed) return;
       try { await loadMapView(); } catch (err) { mapResultsEl.innerHTML = `<div class="search-result">${err.message || "Map load failed."}</div>`; }
     });
     if (meetingDetailToggleEl instanceof HTMLElement) {
@@ -4211,6 +4475,12 @@
         setPinnedFocusSnapshotCollapsed(!pinnedFocusSnapshotCollapsed);
       });
       setPinnedFocusSnapshotCollapsed(false);
+    }
+    if (topExplorerCompactToggleEl instanceof HTMLElement) {
+      topExplorerCompactToggleEl.addEventListener("click", () => {
+        setTopExplorerCompact(!topExplorerCompact);
+      });
+      setTopExplorerCompact(false);
     }
     loadRuntimeDiagnostics();
     loadStartupExplore();
@@ -4357,6 +4627,54 @@
     document.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-timeline-entity-id]");
+      if (!(button instanceof HTMLElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const entityId = Number(button.dataset.timelineEntityId || 0);
+      const label = (button.dataset.timelineEntityLabel || button.textContent || "").trim();
+      const dateNormalized = (button.dataset.timelineEntityDate || "").trim();
+      if (!Number.isFinite(entityId) || entityId <= 0) return;
+
+      const relationMatches = Array.isArray(lastEntityRelatedRows)
+        ? lastEntityRelatedRows
+            .filter((r) => Number(r.entity_id) === entityId && Object.prototype.hasOwnProperty.call(r, "relation_type"))
+            .sort((a, b) => {
+              const ev = Number(b.evidence_count || 0) - Number(a.evidence_count || 0);
+              if (ev) return ev;
+              return Number(b.edge_count || 0) - Number(a.edge_count || 0);
+            })
+        : [];
+
+      if (lastConnectionFocus && lastConnectionFocus.entityId && relationMatches.length) {
+        const best = relationMatches[0];
+        setSidebarView("timeline");
+        void loadConnectionEvidence(entityId, String(best.relation_type || ""), String(best.direction || ""));
+        return;
+      }
+
+      const nextQuery = (label || dateNormalized).trim();
+      if (nextQuery) {
+        entitySearchEl.value = nextQuery;
+        setGlobalEntityFilter(nextQuery);
+      }
+      setSidebarView("search");
+      void (async () => {
+        await searchEntities({ focusFirstMeeting: true });
+        await loadEntityConnections(
+          entityId,
+          label || dateNormalized || `date ${entityId}`,
+          "date",
+          [],
+          { normalized_date: dateNormalized || "" },
+        );
+      })();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
       const button = target.closest("button[data-entity-id]");
       if (!(button instanceof HTMLElement)) return;
       if (button.classList.contains("suggestion-item")) return;
@@ -4374,8 +4692,19 @@
         (matchedRow?.kind_metadata && typeof matchedRow.kind_metadata === "object")
           ? matchedRow.kind_metadata
           : {};
-      if (button.dataset.entitySeed || label) {
-        setGlobalEntityFilter((button.dataset.entitySeed || label).trim());
+      const nextQuery = (button.dataset.entitySeed || label || "").trim();
+      if (nextQuery) {
+        entitySearchEl.value = nextQuery;
+        setGlobalEntityFilter(nextQuery);
+      }
+      if (entityType && entityType !== "meeting") {
+        setSelectedEntityContext({
+          entityId: entityIdNum,
+          label: label.trim(),
+          entityType,
+          bindings,
+          kindMetadata,
+        });
       }
       setSidebarView("search");
       void (async () => {
@@ -4495,6 +4824,28 @@
     document.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      const snapshotPreviewToggle = target.closest("[data-snapshot-preview-toggle]");
+      if (snapshotPreviewToggle instanceof HTMLElement) {
+        event.preventDefault();
+        setFocusSnapshotMeetingPreviewCollapsed(!focusSnapshotMeetingPreviewCollapsed);
+        return;
+      }
+      const snapshotMeetingToggle = target.closest("[data-snapshot-meeting-toggle]");
+      if (snapshotMeetingToggle instanceof HTMLElement) {
+        event.preventDefault();
+        setMeetingDetailCollapsed(!meetingDetailCollapsed);
+        renderPinnedFocusSnapshot();
+        return;
+      }
+      const snapshotJumpDetail = target.closest("[data-snapshot-jump-detail]");
+      if (snapshotJumpDetail instanceof HTMLElement) {
+        event.preventDefault();
+        if (meetingDetailPanelEl instanceof HTMLElement && mainColEl instanceof HTMLElement) {
+          const top = Math.max(0, meetingDetailPanelEl.offsetTop - 8);
+          mainColEl.scrollTo({ top, behavior: "smooth" });
+        }
+        return;
+      }
       const removeBtn = target.closest("[data-remove-filter]");
       if (!(removeBtn instanceof HTMLElement)) return;
       const key = removeBtn.dataset.removeFilter;

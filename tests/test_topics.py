@@ -92,3 +92,50 @@ def test_agenda_topic_filter_returns_only_zoning(tmp_path):
         assert any(i["zoning_signals"]["from_zone"] == "C-H" and i["zoning_signals"]["to_zone"] == "PUD" for i in payload)
     finally:
         app.dependency_overrides.clear()
+
+
+def test_agenda_topic_filter_supports_new_lens_topics(tmp_path):
+    test_db_path = tmp_path / "test_new_topics.db"
+    engine = create_engine(f"sqlite:///{test_db_path}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    with TestingSessionLocal() as db:
+        db.add(Meeting(meeting_id=9001, name="Topic Lens Meeting", date="", time="", location="", type_id=1, video_url=""))
+        db.flush()
+
+        rows = [
+            ("6.1", "School district facilities update for students"),
+            ("6.2", "Approve Grant Application - Governor's Traffic Safety Bureau Grant"),
+            ("6.3", "Ordinance amending municipal infractions and code enforcement procedures"),
+        ]
+        for item_key, title in rows:
+            db.add(AgendaItem(meeting_id=9001, item_key=item_key, section="", title=title))
+
+        db.commit()
+
+    try:
+        client = TestClient(app)
+
+        schools = client.get("/meetings/9001/agenda", params={"topic": "schools"})
+        assert schools.status_code == 200
+        assert [item["item_key"] for item in schools.json()] == ["6.1"]
+
+        public_safety = client.get("/meetings/9001/agenda", params={"topic": "public_safety"})
+        assert public_safety.status_code == 200
+        assert [item["item_key"] for item in public_safety.json()] == ["6.2"]
+
+        enforcement = client.get("/meetings/9001/agenda", params={"topic": "enforcement"})
+        assert enforcement.status_code == 200
+        assert [item["item_key"] for item in enforcement.json()] == ["6.3"]
+    finally:
+        app.dependency_overrides.clear()

@@ -1047,7 +1047,13 @@ def explore_timeline(
             continue
         b = buckets.setdefault(
             key,
-            {"date": key, "label": entity.display_value or key, "meeting_ids": set(), "entity_count": 0},
+            {
+                "entity_id": int(entity.id),
+                "date": key,
+                "label": entity.display_value or key,
+                "meeting_ids": set(),
+                "entity_count": 0,
+            },
         )
         b["meeting_ids"].add(mention.meeting_id)
         b["entity_count"] += 1
@@ -1059,6 +1065,7 @@ def explore_timeline(
     )[:limit]
     return [
         TimelineBucketOut(
+            entity_id=int(b["entity_id"]),
             date=str(b["date"]),
             label=str(b["label"]),
             meeting_ids=sorted(list(b["meeting_ids"]), reverse=True),

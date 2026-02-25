@@ -68,6 +68,8 @@ def test_topic_filters_work_for_new_labels_with_agenda_1408(tmp_path):
             "zoning",
             "ordinances_general",
             "public_hearings",
+            "public_safety",
+            "enforcement",
             "contracts_procurement",
             "budget_finance",
             "urban_renewal_development",
@@ -82,5 +84,13 @@ def test_topic_filters_work_for_new_labels_with_agenda_1408(tmp_path):
 
         zoning_payload = client.get("/meetings/1408/agenda", params={"topic": "zoning"}).json()
         assert {item["item_key"] for item in zoning_payload} == {"6.16", "6.17"}
+
+        public_safety_payload = client.get("/meetings/1408/agenda", params={"topic": "public_safety"}).json()
+        public_safety_keys = {item["item_key"] for item in public_safety_payload}
+        assert {"6.12", "6.13", "6.23"}.issubset(public_safety_keys)
+
+        enforcement_payload = client.get("/meetings/1408/agenda", params={"topic": "enforcement"}).json()
+        enforcement_keys = {item["item_key"] for item in enforcement_payload}
+        assert "6.8" in enforcement_keys
     finally:
         app.dependency_overrides.clear()

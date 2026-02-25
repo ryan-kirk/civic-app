@@ -122,6 +122,7 @@ class DocumentSearchOut(BaseModel):
 
 
 class TimelineBucketOut(BaseModel):
+    entity_id: int
     date: str
     label: str
     meeting_ids: List[int] = Field(default_factory=list)

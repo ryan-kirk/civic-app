@@ -18,5 +18,17 @@
   {
     "text": "Development Agreement amendment in urban renewal area",
     "expected_topics": ["urban_renewal_development"]
+  },
+  {
+    "text": "School district facilities update for students and educational programs",
+    "expected_topics": ["schools"]
+  },
+  {
+    "text": "Approve Grant Application - Governor's Traffic Safety Bureau Grant",
+    "expected_topics": ["public_safety"]
+  },
+  {
+    "text": "Ordinance amending municipal infractions and code enforcement procedures",
+    "expected_topics": ["enforcement", "ordinances_general"]
   }
 ]
