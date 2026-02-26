@@ -377,6 +377,25 @@ def test_graph_backfill_promotes_meeting_and_document_entities_and_connections(t
         assert any(b["source_table"] == "documents" for b in doc_conn.get("bindings", []))
         assert any(r["entity_type"] in {"address", "date", "organization"} for r in cp)
 
+        conn_zoning = client.get(
+            f"/entities/{meeting_row['entity_id']}/connections",
+            params={"topic": "zoning"},
+        )
+        assert conn_zoning.status_code == 200
+        cp_zoning = conn_zoning.json()
+        assert cp_zoning
+        assert any("10841 Douglas Avenue" in (r.get("display_value") or "") for r in cp_zoning)
+        assert not any("3600 86th Street" in (r.get("display_value") or "") for r in cp_zoning)
+
+        conn_dates = client.get(
+            f"/entities/{meeting_row['entity_id']}/connections",
+            params={"entity_type": "date"},
+        )
+        assert conn_dates.status_code == 200
+        cp_dates = conn_dates.json()
+        assert cp_dates
+        assert all((r.get("entity_type") or "") == "date" for r in cp_dates)
+
         evid = client.get(
             f"/entities/{meeting_row['entity_id']}/connections/{doc_conn['entity_id']}/evidence",
             params={"relation_type": "contains_document", "direction": "outgoing"},

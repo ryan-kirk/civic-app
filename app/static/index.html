@@ -497,7 +497,7 @@
       gap: 16px;
       align-items: stretch;
       min-height: 0;
-      height: 100%;
+      height: auto;
     }
     .graph-walk-panel {
       display: grid;
@@ -724,14 +724,14 @@
       line-height: 1;
     }
     .graph-walk-row-actions button:hover { transform: none; background: #fbfaf6; }
-    .main-col { min-width: 0; min-height: 0; height: 100%; overflow-y: auto; padding-right: 4px; }
-    .side-col { min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+    .main-col { min-width: 0; min-height: 0; height: auto; overflow: visible; padding-right: 4px; }
+    .side-col { min-width: 0; min-height: 0; height: auto; overflow: visible; }
     .sticky {
       position: sticky;
       top: 0;
-      height: 100%;
-      max-height: 100%;
-      overflow: hidden;
+      height: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     form { display: grid; gap: 12px; }
@@ -1162,6 +1162,27 @@
       cursor: pointer;
     }
     .lens-btn:hover { background: #f5f8f1; }
+    .lens-btn.active {
+      background: #dff2f8;
+      border-color: #8ec4d2;
+      color: #0b4d5f;
+      font-weight: 700;
+    }
+    .topic-mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #bfe2eb;
+      border-radius: 999px;
+      background: #edf8fb;
+      color: #0b4d5f;
+      padding: 1px 7px;
+      font-size: 0.73rem;
+      line-height: 1.2;
+      font-weight: 600;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
     .sidebar-scroll {
       min-height: 0;
       overflow-y: auto;
@@ -1629,6 +1650,13 @@
       padding: 0 2px;
     }
     .flow-jump-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      background: rgba(248, 246, 239, .95);
+      backdrop-filter: blur(2px);
+    }
+    .facet-panels-sticky {
       position: sticky;
       top: 0;
       z-index: 6;
@@ -2103,24 +2131,23 @@
         <div class="search-panel sticky">
           <div id="entityExplorerControlsBlock">
           <div class="entity-panel-header">
-            <div class="entity-title">Graph Filters</div>
-            <div class="sub">Set node/topic filters here. Presets may apply a topic filter or seed search; focus stays in the top strip.</div>
+            <div class="entity-title" hidden>Graph Filters</div>
+            <div class="sub" hidden></div>
             <div class="facet-control-grid">
               <div class="facet-mini-panel">
-                <div class="facet-mini-title">Lens Presets</div>
+                <div class="facet-mini-title">Topic Filters</div>
                 <div class="lens-row">
                   <button type="button" class="lens-btn" data-quick-topic="zoning" title="Applies topic filter: zoning">Zoning</button>
                   <button type="button" class="lens-btn" data-quick-topic="schools" title="Applies topic filter: schools">Schools</button>
                   <button type="button" class="lens-btn" data-quick-topic="public_safety" title="Applies topic filter: public_safety">Public Safety</button>
                   <button type="button" class="lens-btn" data-quick-topic="enforcement" title="Applies topic filter: enforcement">Enforcement</button>
-                  <button type="button" class="lens-btn" data-quick-query="development" title="Seeds entity search: development">Development</button>
+                  <button type="button" class="lens-btn" data-quick-topic="urban_renewal_development" title="Applies topic filter: urban_renewal_development">Development</button>
                 </div>
               </div>
               <div class="facet-mini-panel">
                 <div class="search-type-row">
                   <div class="facet-mini-title">Node Kinds</div>
                   <div id="entityTypeFilterRow" class="search-type-filters">
-                    <button type="button" class="search-type-btn active" data-entity-type-filter="">All</button>
                     <button type="button" class="search-type-btn" data-entity-type-filter="meeting">Meetings</button>
                     <button type="button" class="search-type-btn" data-entity-type-filter="document">Documents</button>
                     <button type="button" class="search-type-btn" data-entity-type-filter="person">People</button>
@@ -2153,7 +2180,7 @@
             </div>
           </div>
           </div>
-          <div id="facetViewsSidebarPanel" class="sidebar-section facet-active">
+          <div id="facetViewsSidebarPanel" class="sidebar-section facet-active facet-panels-sticky">
             <div class="sidebar-section-title">Facet Panels</div>
             <div class="view-tabs facet-view-tabs">
               <button id="tabSearch" type="button" class="tab-btn facet-shortcut-btn active">Scroll Up</button>
@@ -3205,6 +3232,9 @@
         const headerEl = entityExplorerControlsBlockEl.querySelector(".entity-panel-header");
         const facetGridEl = headerEl instanceof HTMLElement ? headerEl.querySelector(".facet-control-grid") : null;
         if (headerEl instanceof HTMLElement) {
+          for (const el of headerEl.querySelectorAll(".entity-title, .sub")) {
+            if (el instanceof HTMLElement) el.hidden = true;
+          }
           const currentParent = filterBarPanelEl.parentElement;
           if (currentParent !== headerEl) {
             headerEl.insertBefore(filterBarPanelEl, facetGridEl instanceof HTMLElement ? facetGridEl : null);
@@ -3431,10 +3461,22 @@
       syncWorkspaceHeight();
     }
 
+    function formatTopicFilterLabel(topic) {
+      const key = String(topic || "").trim().toLowerCase();
+      const labels = {
+        zoning: "zoning",
+        schools: "schools",
+        public_safety: "public safety",
+        enforcement: "enforcement",
+        urban_renewal_development: "development",
+      };
+      return labels[key] || key;
+    }
+
     function renderGlobalFilterChips() {
       const chips = [];
       if (globalFilters.topic) {
-        chips.push(`<span class="filter-chip topic">Topic: ${globalFilters.topic}<button type="button" data-remove-filter="topic">x</button></span>`);
+        chips.push(`<span class="filter-chip topic">Topic: ${formatTopicFilterLabel(globalFilters.topic)}<button type="button" data-remove-filter="topic">x</button></span>`);
       }
       if (globalFilters.entityType) {
         chips.push(`<span class="filter-chip entity">Kind: ${globalFilters.entityType}<button type="button" data-remove-filter="entityType">x</button></span>`);
@@ -3454,10 +3496,32 @@
       }
     }
 
+    function updateTopicPresetButtons() {
+      const selected = String(globalFilters.topic || "").trim().toLowerCase();
+      for (const btn of document.querySelectorAll(".lens-btn[data-quick-topic]")) {
+        if (!(btn instanceof HTMLElement)) continue;
+        const value = String(btn.dataset.quickTopic || "").trim().toLowerCase();
+        btn.classList.toggle("active", Boolean(selected) && value === selected);
+      }
+    }
+
     function setGlobalTopicFilter(topic) {
       globalFilters.topic = (topic || "").trim();
       topicEl.value = globalFilters.topic;
+      updateTopicPresetButtons();
       renderGlobalFilterChips();
+      updateResultsContextHeader();
+      if (lastConnectionFocus && Number.isFinite(Number(lastConnectionFocus.entityId))) {
+        void loadEntityConnections(
+          Number(lastConnectionFocus.entityId),
+          lastConnectionFocus.label || "focus",
+          lastConnectionFocus.entityType || "",
+          lastConnectionFocus.bindings || [],
+          lastConnectionFocus.kindMetadata || {},
+        );
+      } else if (lastConnectionFocus && Array.isArray(lastEntityRelatedRows)) {
+        renderEntityRelatedResults(lastEntityRelatedRows, lastConnectionFocus.label || "focus");
+      }
     }
 
     function setGlobalEntityFilter(query) {
@@ -3471,6 +3535,17 @@
       updateEntityTypeFilterButtons();
       renderGlobalFilterChips();
       updateResultsContextHeader();
+      if (lastConnectionFocus && Number.isFinite(Number(lastConnectionFocus.entityId))) {
+        void loadEntityConnections(
+          Number(lastConnectionFocus.entityId),
+          lastConnectionFocus.label || "focus",
+          lastConnectionFocus.entityType || "",
+          lastConnectionFocus.bindings || [],
+          lastConnectionFocus.kindMetadata || {},
+        );
+      } else if (lastConnectionFocus && Array.isArray(lastEntityRelatedRows)) {
+        renderEntityRelatedResults(lastEntityRelatedRows, lastConnectionFocus.label || "focus");
+      }
       renderGraphWalk();
     }
 
@@ -3487,7 +3562,7 @@
       if (globalFilters.meetingId) bits.push(`meeting ${globalFilters.meetingId}`);
       if (globalFilters.entityQuery) bits.push(`entity "${globalFilters.entityQuery}"`);
       if (globalFilters.entityType) bits.push(`kind ${globalFilters.entityType}`);
-      if (globalFilters.topic) bits.push(`topic "${globalFilters.topic}"`);
+      if (globalFilters.topic) bits.push(`topic "${formatTopicFilterLabel(globalFilters.topic)}"`);
       resultsContextSummaryEl.textContent = bits.length
         ? `Evidence for ${bits.join(" • ")}. Agenda items, documents, mentions, and meeting details stay synchronized with the shared filter bar.`
         : "Evidence panels stay synchronized with the active global filters and current focus.";
@@ -3541,12 +3616,33 @@
     }
 
     let evidenceFlashTimer = null;
+    function scrollMainWorkbenchTo(targetEl, offset = 8) {
+      if (!(targetEl instanceof HTMLElement)) return;
+      const scroller = mainColEl instanceof HTMLElement ? mainColEl : null;
+      if (scroller instanceof HTMLElement) {
+        const styles = window.getComputedStyle(scroller);
+        const scrollableY = (styles.overflowY === "auto" || styles.overflowY === "scroll")
+          && scroller.scrollHeight > scroller.clientHeight + 4;
+        if (scrollableY) {
+          const top = Math.max(0, targetEl.offsetTop - offset);
+          scroller.scrollTo({ top, behavior: "smooth" });
+          return;
+        }
+      }
+      const stickyOffset = (() => {
+        let total = 8;
+        if (flowJumpPanelEl instanceof HTMLElement) total += flowJumpPanelEl.offsetHeight || 0;
+        if (pinnedFocusSnapshotPanelEl instanceof HTMLElement && !pinnedFocusSnapshotPanelEl.hidden) {
+          total += pinnedFocusSnapshotPanelEl.offsetHeight || 0;
+        }
+        return total;
+      })();
+      const top = Math.max(0, window.scrollY + targetEl.getBoundingClientRect().top - stickyOffset);
+      window.scrollTo({ top, behavior: "smooth" });
+    }
     function focusEvidencePanel(targetEl = null) {
       const panel = explorationWorkspacePanelEl instanceof HTMLElement ? explorationWorkspacePanelEl : null;
-      if (panel && mainColEl instanceof HTMLElement) {
-        const offset = Math.max(0, panel.offsetTop - 8);
-        mainColEl.scrollTo({ top: offset, behavior: "smooth" });
-      }
+      if (panel) scrollMainWorkbenchTo(panel, 8);
       const flashTarget = (targetEl instanceof HTMLElement ? targetEl : panel);
       if (!(flashTarget instanceof HTMLElement)) return;
       flashTarget.classList.remove("flash-focus");
@@ -4757,20 +4853,28 @@
 
     function renderEntityRelatedResults(rows, entityLabel) {
       lastEntityRelatedRows = rows || [];
+      const allRows = Array.isArray(rows) ? rows : [];
+      const kindFilter = String(globalFilters.entityType || "").trim().toLowerCase();
+      const activeTopicTag = String(globalFilters.topic || "").trim();
+      const activeTopicLabel = activeTopicTag ? formatTopicFilterLabel(activeTopicTag) : "";
+      const visibleRows = kindFilter
+        ? allRows.filter((r) => String(r.entity_type || "").trim().toLowerCase() === kindFilter)
+        : allRows;
       if (relatedEntitiesWorkspacePanelEl instanceof HTMLElement) relatedEntitiesWorkspacePanelEl.hidden = false;
       if (leftRelatedEmptyEl instanceof HTMLElement) {
-        leftRelatedEmptyEl.hidden = Boolean((rows || []).length);
+        leftRelatedEmptyEl.hidden = Boolean(visibleRows.length);
       }
-      if (!rows.length) {
-        entityRelatedResultsEl.innerHTML = `<div class="search-result">No related entities found for ${entityLabel}.</div>`;
+      if (!visibleRows.length) {
+        const filterMsg = kindFilter ? ` matching kind "${kindFilter}"` : "";
+        entityRelatedResultsEl.innerHTML = `<div class="search-result">No related entities${filterMsg} found for ${entityLabel}.</div>`;
         renderLeftEntityContext();
         updateExplorationWorkspaceVisibility();
         syncWorkspaceHeight();
         return;
       }
-      const hasGraphEdgeShape = rows.some((r) => Object.prototype.hasOwnProperty.call(r, "relation_type"));
+      const hasGraphEdgeShape = allRows.some((r) => Object.prototype.hasOwnProperty.call(r, "relation_type"));
       const title = hasGraphEdgeShape ? `Connections for ${entityLabel}` : `Related to ${entityLabel}`;
-      entityRelatedResultsEl.innerHTML = `<div class="entity-title">${title}</div>` + rows.map((row) => {
+      entityRelatedResultsEl.innerHTML = `<div class="entity-title">${title}</div>` + visibleRows.map((row) => {
         const attrs = [
           `data-entity-id="${row.entity_id}"`,
           `data-entity-type="${row.entity_type || ""}"`,
@@ -4783,6 +4887,7 @@
         const edgeMeta = hasGraphEdgeShape
           ? `${row.direction} • ${row.relation_type} • meetings: ${row.shared_meeting_count} • evidence: ${row.evidence_count}`
           : `shared meetings: ${row.shared_meeting_count} • co-occurrences: ${row.cooccurrence_count}`;
+        const topicBadge = activeTopicLabel ? `<span class="topic-mini-badge">topic: ${escapeHtml(activeTopicLabel)}</span>` : "";
         const mentionsAttrs = [
           `data-entity-mentions-id="${row.entity_id}"`,
           `data-entity-mentions-label="${String(row.display_value || "").replace(/"/g, "&quot;")}"`,
@@ -4798,7 +4903,7 @@
           String(selectedConnectionContext.relationType || "") === String(row.relation_type || "") &&
           String(selectedConnectionContext.direction || "") === String(row.direction || "")
         );
-        return `<div class="search-result related ${isSelectedEdge ? "active-edge" : ""}"><div class="node-result-head"><button type="button" ${attrs.join(" ")}>${row.display_value}</button> <span class="node-result-kind">${row.entity_type}</span><span class="meta">${edgeMeta} •${links}</span></div>${kindMetaLine ? `<div class="node-result-summary">${kindMetaLine}</div>` : ""}</div>`;
+        return `<div class="search-result related ${isSelectedEdge ? "active-edge" : ""}"><div class="node-result-head"><button type="button" ${attrs.join(" ")}>${row.display_value}</button> <span class="node-result-kind">${row.entity_type}</span><span class="meta">${edgeMeta}${topicBadge ? ` • ${topicBadge}` : ""} •${links}</span></div>${kindMetaLine ? `<div class="node-result-summary">${kindMetaLine}</div>` : ""}</div>`;
       }).join("");
       renderLeftEntityContext();
       updateExplorationWorkspaceVisibility();
@@ -4826,6 +4931,7 @@
         });
       }
       const rows = entity?.mentions || [];
+      const activeTopicLabel = globalFilters.topic ? formatTopicFilterLabel(globalFilters.topic) : "";
       if (!entity || !rows.length) {
         entityMentionsResultsEl.innerHTML = `<div class="search-result">No entity mentions available.</div>`;
         if (!preserveFocus) renderLeftEntityContext();
@@ -4844,7 +4950,7 @@
       entityMentionsResultsEl.innerHTML =
         `<div class="entity-title">Mentions for ${titleLabelHtml}${preserveFocus ? " (focus unchanged)" : ""}</div>` +
         rows.map((m) => (
-          `<div class="search-result"><div class="mention-meta"><span>meeting ${m.meeting_id}</span><span>${escapeHtml(m.source_type || "")}</span><span>confidence: ${Number(m.confidence || 0).toFixed(2)}</span></div><div class="mention-context">${highlightEvidenceSnippet(m.context_text || m.mention_text || "", snippetHighlightLabels)}</div></div>`
+          `<div class="search-result"><div class="mention-meta"><span>meeting ${m.meeting_id}</span><span>${escapeHtml(m.source_type || "")}</span><span>confidence: ${Number(m.confidence || 0).toFixed(2)}</span>${activeTopicLabel ? `<span class="topic-mini-badge">topic: ${escapeHtml(activeTopicLabel)}</span>` : ""}</div><div class="mention-context">${highlightEvidenceSnippet(m.context_text || m.mention_text || "", snippetHighlightLabels)}</div></div>`
         )).join("");
       if (!preserveFocus) renderLeftEntityContext();
       else {
@@ -5198,7 +5304,12 @@
 
     async function loadEntityConnections(entityId, entityLabel, entityType = "", bindings = [], kindMetadata = {}) {
       try {
-        const res = await fetch(`/entities/${entityId}/connections?limit=25`);
+        const params = new URLSearchParams({ limit: "25" });
+        const topic = String(globalFilters.topic || "").trim();
+        const kind = String(globalFilters.entityType || "").trim().toLowerCase();
+        if (topic) params.set("topic", topic);
+        if (kind) params.set("entity_type", kind);
+        const res = await fetch(`/entities/${entityId}/connections?${params.toString()}`);
         if (!res.ok) throw new Error(`Connections lookup failed (${res.status})`);
         const rows = await res.json();
         const incomingFocusKey = `${(entityType || "entity").toLowerCase()}:${Number(entityId)}`;
@@ -5301,6 +5412,7 @@
           entityMentionsResultsEl.innerHTML = `<div class="search-result"><div class="entity-title">${title}</div><div class="meta">No evidence rows found for this connection.</div></div>`;
         } else {
           const snippetHighlightLabels = [selectedConnectionContext?.toLabel || relatedLabel];
+          const activeTopicLabel = globalFilters.topic ? formatTopicFilterLabel(globalFilters.topic) : "";
           entityMentionsResultsEl.innerHTML = `
             <div class="entity-title">${title}</div>
             ${rows.map((row) => `
@@ -5311,6 +5423,7 @@
                   <span>meeting ${row.meeting_id ?? "?"}</span>
                   <span>${escapeHtml(row.evidence_source_type || "")}:${row.evidence_source_id}</span>
                   ${row.document_id ? `<span>doc ${row.document_id}</span>` : ""}
+                  ${activeTopicLabel ? `<span class="topic-mini-badge">topic: ${escapeHtml(activeTopicLabel)}</span>` : ""}
                 </div>
                 ${row.mention_text ? `<div class="meta">mention: ${highlightEvidenceSnippet(row.mention_text, snippetHighlightLabels)}</div>` : ""}
                 <div class="mention-context">${highlightEvidenceSnippet(row.context_text || "(no context)", snippetHighlightLabels)}</div>
@@ -5358,17 +5471,8 @@
       const workspace = document.querySelector(".workspace");
       const graphWalkPanel = graphWalkViewPanelEl instanceof HTMLElement ? graphWalkViewPanelEl : null;
       if (!(workspace instanceof HTMLElement) && !graphWalkPanel) return;
-      if (window.innerWidth <= 900) {
-        if (workspace instanceof HTMLElement) workspace.style.height = "auto";
-        if (graphWalkPanel) graphWalkPanel.style.height = "auto";
-        return;
-      }
-      const topAnchor = (activeMainView === "graph" && graphWalkPanel) ? graphWalkPanel : workspace;
-      if (!(topAnchor instanceof HTMLElement)) return;
-      const top = topAnchor.getBoundingClientRect().top;
-      const height = Math.max(360, Math.floor(window.innerHeight - top - 12));
-      if (workspace instanceof HTMLElement) workspace.style.height = `${height}px`;
-      if (graphWalkPanel) graphWalkPanel.style.height = `${height}px`;
+      if (workspace instanceof HTMLElement) workspace.style.height = "auto";
+      if (graphWalkPanel) graphWalkPanel.style.height = "auto";
     }
 
     async function searchEntities(options = {}) {
@@ -5599,6 +5703,7 @@
       if (scroller instanceof HTMLElement) {
         scroller.scrollTo({ top: 0, behavior: "smooth" });
       }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
     tabTimelineEl.addEventListener("click", async () => {
       const closed = toggleFacetPanelShortcut("timeline", timelineSectionEl);
@@ -5666,6 +5771,7 @@
     loadStoredMeetingsBrowse();
     loadTopicBrowser();
     renderGlobalFilterChips();
+    updateTopicPresetButtons();
     updateEntityTypeFilterButtons();
     updateResultsContextHeader();
     renderLeftEntityContext();
@@ -5809,9 +5915,8 @@
         pivot: pivotResultsWorkspacePanelEl,
       };
       const panel = targetMap[jumpTarget];
-      if (!(panel instanceof HTMLElement) || !(mainColEl instanceof HTMLElement)) return;
-      const top = Math.max(0, panel.offsetTop - 8);
-      mainColEl.scrollTo({ top, behavior: "smooth" });
+      if (!(panel instanceof HTMLElement)) return;
+      scrollMainWorkbenchTo(panel, 8);
     });
 
     document.addEventListener("click", (event) => {
@@ -6055,10 +6160,7 @@
       const snapshotJumpDetail = target.closest("[data-snapshot-jump-detail]");
       if (snapshotJumpDetail instanceof HTMLElement) {
         event.preventDefault();
-        if (meetingDetailPanelEl instanceof HTMLElement && mainColEl instanceof HTMLElement) {
-          const top = Math.max(0, meetingDetailPanelEl.offsetTop - 8);
-          mainColEl.scrollTo({ top, behavior: "smooth" });
-        }
+        if (meetingDetailPanelEl instanceof HTMLElement) scrollMainWorkbenchTo(meetingDetailPanelEl, 8);
         return;
       }
       const removeBtn = target.closest("[data-remove-filter]");

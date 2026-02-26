@@ -14,6 +14,7 @@ from app.db import get_db
 from app.models import (
     AgendaItem,
     Document,
+    DocumentTextExtraction,
     Entity,
     EntityAlias,
     EntityBinding,
@@ -718,6 +719,8 @@ def related_entities(
 @router.get("/entities/{entity_id}/connections", response_model=list[EntityConnectionOut])
 def get_entity_connections(
     entity_id: int,
+    topic: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
@@ -736,6 +739,110 @@ def get_entity_connections(
     )
     if not edges:
         return []
+
+    topic_norm = normalize_text(topic or "")
+    if topic_norm:
+        source_topic_cache: dict[tuple[str, int], bool] = {}
+        mention_source_cache: dict[tuple[str, int], EntityMention | None] = {}
+        agenda_cache: dict[int, AgendaItem | None] = {}
+        doc_cache: dict[int, Document | None] = {}
+        extraction_cache: dict[int, DocumentTextExtraction | None] = {}
+        minutes_cache: dict[int, MeetingMinutesMetadata | None] = {}
+        meeting_cache: dict[int, Meeting | None] = {}
+
+        def _agenda_row(row_id: int) -> AgendaItem | None:
+            if row_id not in agenda_cache:
+                agenda_cache[row_id] = db.get(AgendaItem, row_id)
+            return agenda_cache[row_id]
+
+        def _doc_row(row_id: int) -> Document | None:
+            if row_id not in doc_cache:
+                doc_cache[row_id] = db.get(Document, row_id)
+            return doc_cache[row_id]
+
+        def _extraction_row(row_id: int) -> DocumentTextExtraction | None:
+            if row_id not in extraction_cache:
+                extraction_cache[row_id] = db.get(DocumentTextExtraction, row_id)
+            return extraction_cache[row_id]
+
+        def _minutes_row(row_id: int) -> MeetingMinutesMetadata | None:
+            if row_id not in minutes_cache:
+                minutes_cache[row_id] = db.get(MeetingMinutesMetadata, row_id)
+            return minutes_cache[row_id]
+
+        def _meeting_row(row_id: int) -> Meeting | None:
+            if row_id not in meeting_cache:
+                meeting_cache[row_id] = db.get(Meeting, row_id)
+            return meeting_cache[row_id]
+
+        def _mention_source_row(source_type: str, source_id: int) -> EntityMention | None:
+            key = (source_type, source_id)
+            if key not in mention_source_cache:
+                mention_source_cache[key] = (
+                    db.query(EntityMention)
+                    .filter(
+                        EntityMention.source_type == source_type,
+                        EntityMention.source_id == source_id,
+                    )
+                    .order_by(EntityMention.id.desc())
+                    .first()
+                )
+            return mention_source_cache[key]
+
+        def _edge_matches_topic(edge: EntityConnection) -> bool:
+            source_type = normalize_text(edge.evidence_source_type or "")
+            source_id = int(edge.evidence_source_id or 0)
+            cache_key = (source_type, source_id)
+            if cache_key in source_topic_cache:
+                return source_topic_cache[cache_key]
+
+            text_parts: list[str] = []
+            if source_type and source_id > 0 and source_type != "documents":
+                mention = _mention_source_row(source_type, source_id)
+                if mention:
+                    text_parts.extend([mention.context_text or "", mention.mention_text or ""])
+            if source_type in {"agenda_item_title", "agenda_items"} and source_id > 0:
+                agenda = _agenda_row(source_id)
+                if agenda:
+                    text_parts.extend([agenda.title or "", agenda.section or "", agenda.item_key or ""])
+            elif source_type in {"document_title", "documents"} and source_id > 0:
+                doc = _doc_row(source_id)
+                if doc:
+                    text_parts.append(doc.title or "")
+                    if doc.agenda_item_id:
+                        agenda = _agenda_row(int(doc.agenda_item_id))
+                        if agenda:
+                            text_parts.append(agenda.title or "")
+            elif source_type == "document_content" and source_id > 0:
+                extraction = _extraction_row(source_id)
+                if extraction:
+                    text_parts.extend([extraction.title or "", extraction.text_excerpt or ""])
+            elif source_type == "minutes_excerpt" and source_id > 0:
+                minutes = _minutes_row(source_id)
+                if minutes:
+                    text_parts.extend([minutes.title or "", minutes.text_excerpt or ""])
+            elif source_type == "meeting_metadata" and source_id > 0:
+                meeting = _meeting_row(source_id)
+                if meeting:
+                    text_parts.extend(
+                        [
+                            meeting.name or "",
+                            meeting.location or "",
+                            meeting.date or "",
+                            meeting.time or "",
+                        ]
+                    )
+
+            source_text = normalize_text(" ".join(p for p in text_parts if p).strip())
+            if not source_text:
+                source_topic_cache[cache_key] = False
+                return False
+            source_topic_cache[cache_key] = topic_norm in classify_topics(source_text)
+            return source_topic_cache[cache_key]
+
+        edges = [edge for edge in edges if _edge_matches_topic(edge)]
+        if not edges:
+            return []
 
     buckets: dict[tuple[int, str, str], dict] = {}
     other_ids: set[int] = set()
@@ -766,8 +873,21 @@ def get_entity_connections(
         for row in db.query(Entity).filter(Entity.id.in_(list(other_ids))).all()
     }
 
+    entity_type_norm = normalize_text(entity_type or "")
+    candidate_keys = [
+        key
+        for key in buckets.keys()
+        if not entity_type_norm
+        or (
+            (other := entities.get(key[0])) is not None
+            and normalize_text(other.entity_type or "") == entity_type_norm
+        )
+    ]
+    if not candidate_keys:
+        return []
+
     ranked_keys = sorted(
-        buckets.keys(),
+        candidate_keys,
         key=lambda key: (
             -len(buckets[key]["meeting_ids"]),
             -int(buckets[key]["evidence_count"]),
