@@ -24,7 +24,8 @@
       margin: 0;
       font-family: "Avenir Next", "Segoe UI", sans-serif;
       color: var(--ink);
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       background:
         radial-gradient(1000px 500px at 10% -10%, #dce8e9 0%, transparent 60%),
         radial-gradient(900px 450px at 90% -5%, #efe6d5 0%, transparent 60%),
@@ -32,7 +33,8 @@
     }
     .wrap {
       max-width: 1200px;
-      height: 100vh;
+      min-height: 100vh;
+      height: auto;
       margin: 0 auto;
       padding: 16px;
       display: grid;
@@ -158,6 +160,37 @@
       margin-bottom: 2px;
     }
     .top-panel-compact-toggle:hover { transform: none; background: #fbfaf6; }
+    .top-panel-control-row {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .top-panel-mode-toggle {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .top-panel-mode-toggle button {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .top-panel-mode-toggle button.active {
+      background: #dceef3;
+      border-color: #86c7d8;
+      color: #0c4a60;
+    }
+    .top-panel-mode-toggle button:hover { transform: none; background: #fbfaf6; }
+    .top-panel-mode-toggle button.active:hover { background: #dceef3; }
     .top-filter-stack {
       display: grid;
       gap: 10px;
@@ -466,6 +499,231 @@
       min-height: 0;
       height: 100%;
     }
+    .graph-walk-panel {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 10px;
+      padding: 12px;
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .graph-walk-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e7e1d6;
+    }
+    .graph-walk-head h2 { margin: 0; font-size: .95rem; letter-spacing: .02em; }
+    .graph-walk-head .sub { color: var(--muted); font-size: .8rem; }
+    .graph-walk-actions {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .graph-walk-actions button {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .72rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .graph-walk-actions button:hover { transform: none; background: #fbfaf6; }
+    .graph-walk-actions button[aria-pressed="true"] {
+      background: #eef8fb;
+      border-color: #9fd4e2;
+      color: #0d5f77;
+    }
+    .graph-walk-breadcrumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-height: 1.5rem;
+    }
+    .graph-walk-crumb {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid #dcd5c8;
+      background: #fff;
+      color: #234b57;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .75rem;
+      cursor: pointer;
+    }
+    .graph-walk-crumb.active {
+      background: #e8f7fb;
+      border-color: #86c7d8;
+      color: #0c4a60;
+      box-shadow: inset 0 0 0 1px #c1e7f0;
+    }
+    .graph-walk-crumb-arrow {
+      color: #7a847e;
+      font-size: .8rem;
+      user-select: none;
+    }
+    .graph-walk-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1fr);
+      gap: 10px;
+      min-height: 0;
+    }
+    .graph-walk-canvas-panel,
+    .graph-walk-detail-panel {
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #fbfaf6;
+      padding: 10px;
+      min-height: 0;
+    }
+    .graph-walk-canvas-wrap {
+      border: 1px solid #e6dfd2;
+      border-radius: 10px;
+      background: #fff;
+      min-height: 420px;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+    .graph-walk-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(134,199,216,.10), transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(23,117,148,.06), transparent 50%),
+        #fff;
+    }
+    .graph-walk-empty {
+      border: 1px dashed #d7d2c8;
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--muted);
+      background: #fbfaf6;
+      font-size: .85rem;
+    }
+    .graph-node { cursor: pointer; }
+    .graph-node circle {
+      stroke: #d0d9cd;
+      stroke-width: 1.2;
+      fill: #fff;
+    }
+    .graph-node.focus circle {
+      fill: #e7f6fb;
+      stroke: #69b7cf;
+      stroke-width: 2;
+    }
+    .graph-node.trail circle {
+      fill: #f4fbfd;
+      stroke: #86c7d8;
+    }
+    .graph-node.selected-connection circle {
+      fill: #fff6df;
+      stroke: #e0b74c;
+      stroke-width: 2;
+    }
+    .graph-node text {
+      font-size: 12px;
+      font-weight: 700;
+      fill: #24312d;
+      pointer-events: none;
+    }
+    .graph-node .graph-node-sub {
+      font-size: 10px;
+      font-weight: 500;
+      fill: #64706a;
+    }
+    .graph-edge {
+      stroke: #c8d3c9;
+      stroke-width: 1.5;
+      opacity: .95;
+    }
+    .graph-edge.selected {
+      stroke: #d59c26;
+    }
+    .graph-edge-label {
+      font-size: 10px;
+      fill: #6a736d;
+      paint-order: stroke;
+      stroke: rgba(255,255,255,.95);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+    .graph-walk-detail-panel {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+    .graph-walk-list {
+      display: grid;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .graph-walk-row {
+      border: 1px solid #e8e2d6;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+      display: grid;
+      gap: 4px;
+    }
+    .graph-walk-row.active {
+      border-color: #e0b74c;
+      background: #fff9ea;
+      box-shadow: inset 0 0 0 1px #f1d18c;
+    }
+    .graph-walk-row-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .graph-walk-row-title {
+      background: transparent;
+      border: 0;
+      color: #0b4d5f;
+      padding: 0;
+      font: inherit;
+      text-align: left;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .graph-walk-row-title:hover { text-decoration: underline; }
+    .graph-walk-row-meta {
+      font-size: .74rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    .graph-walk-row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .graph-walk-row-actions button {
+      border: 1px solid #d8d1c4;
+      background: #fff;
+      color: #244b56;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .graph-walk-row-actions button:hover { transform: none; background: #fbfaf6; }
     .main-col { min-width: 0; min-height: 0; height: 100%; overflow-y: auto; padding-right: 4px; }
     .side-col { min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
     .sticky {
@@ -1539,6 +1797,8 @@
       .summary { grid-template-columns: 1fr; }
       .coverage-grid { grid-template-columns: 1fr 1fr; }
       .workspace { grid-template-columns: 1fr; height: auto; }
+      .graph-walk-layout { grid-template-columns: 1fr; }
+      .graph-walk-canvas-wrap, .graph-walk-svg { min-height: 320px; }
       .main-col, .side-col { overflow: visible; }
       .sticky { position: static; }
     }
@@ -1564,7 +1824,13 @@
       <div class="filter-empty">Filters apply across meeting results and entity discovery.</div>
     </section>
     <section id="topExplorerControlsPanel" class="panel top-explorer-controls">
-      <button id="topExplorerCompactToggle" type="button" class="top-panel-compact-toggle" aria-expanded="true">Compact</button>
+      <div class="top-panel-control-row">
+        <div class="top-panel-mode-toggle" role="group" aria-label="Main view mode">
+          <button id="workbenchViewBtn" type="button" class="active" aria-pressed="true">Workbench</button>
+          <button id="graphWalkViewBtn" type="button" aria-pressed="false">Graph Walk</button>
+        </div>
+        <button id="topExplorerCompactToggle" type="button" class="top-panel-compact-toggle" aria-expanded="true">Compact</button>
+      </div>
       <div id="topSearchMount"></div>
       <div id="topFilterCol" class="top-filter-stack">
         <div id="topFilterMount"></div>
@@ -1587,6 +1853,46 @@
           </div>
           <div id="topSelectedConnectionSub" class="focus-card-meta">No connection selected.</div>
           <div id="topSelectedConnectionStats" class="focus-card-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="graphWalkViewPanel" class="panel graph-walk-panel" hidden>
+      <div class="graph-walk-head">
+        <div>
+          <h2>Graph Walk</h2>
+          <div class="sub">Focus node + direct neighbors (Markov blanket approximation). Click a neighbor to walk and expand the next layer.</div>
+        </div>
+        <div class="graph-walk-actions">
+          <button id="graphWalkZoomOutBtn" type="button" title="Zoom out graph">−</button>
+          <button id="graphWalkZoomResetBtn" type="button" title="Reset graph zoom" aria-pressed="true">Reset View</button>
+          <button id="graphWalkZoomInBtn" type="button" title="Zoom in graph">+</button>
+          <button id="graphWalkSyncToFocusBtn" type="button">Reset To Focus</button>
+          <button id="graphWalkClearTrailBtn" type="button">Clear Trail</button>
+        </div>
+      </div>
+      <div id="graphWalkEmpty" class="graph-walk-empty">Select an entity or meeting focus to visualize its direct graph neighborhood.</div>
+      <div class="graph-walk-breadcrumbs" id="graphWalkBreadcrumbs"></div>
+      <div id="graphWalkLayout" class="graph-walk-layout" hidden>
+        <div class="graph-walk-canvas-panel">
+          <div class="browse-section-title">Graph Neighborhood</div>
+          <div class="graph-walk-canvas-wrap">
+            <svg id="graphWalkSvg" class="graph-walk-svg" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet" aria-label="Graph walk visualization"></svg>
+          </div>
+        </div>
+        <div class="graph-walk-detail-panel">
+          <div class="browse-section">
+            <div class="browse-section-title">Focused Node</div>
+            <div id="graphWalkNodeDetails" class="graph-walk-empty">No graph focus selected.</div>
+          </div>
+          <div class="browse-section">
+            <div class="browse-section-title">Neighbors (Current Focus)</div>
+            <div id="graphWalkNeighborList" class="graph-walk-list"></div>
+          </div>
+          <div class="browse-section">
+            <div class="browse-section-title">Trail</div>
+            <div id="graphWalkTrailSummary" class="graph-walk-empty">Walk the graph by clicking a neighbor node.</div>
+          </div>
         </div>
       </div>
     </section>
@@ -1888,6 +2194,7 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script>
     const form = document.getElementById("queryForm");
     const runBtn = document.getElementById("runBtn");
@@ -1962,7 +2269,22 @@
     const topFilterMountEl = document.getElementById("topFilterMount");
     const topSearchMountEl = document.getElementById("topSearchMount");
     const topExplorerControlsPanelEl = document.getElementById("topExplorerControlsPanel");
+    const workbenchViewBtnEl = document.getElementById("workbenchViewBtn");
+    const graphWalkViewBtnEl = document.getElementById("graphWalkViewBtn");
     const topExplorerCompactToggleEl = document.getElementById("topExplorerCompactToggle");
+    const graphWalkViewPanelEl = document.getElementById("graphWalkViewPanel");
+    const graphWalkEmptyEl = document.getElementById("graphWalkEmpty");
+    const graphWalkLayoutEl = document.getElementById("graphWalkLayout");
+    const graphWalkSvgEl = document.getElementById("graphWalkSvg");
+    const graphWalkBreadcrumbsEl = document.getElementById("graphWalkBreadcrumbs");
+    const graphWalkNodeDetailsEl = document.getElementById("graphWalkNodeDetails");
+    const graphWalkNeighborListEl = document.getElementById("graphWalkNeighborList");
+    const graphWalkTrailSummaryEl = document.getElementById("graphWalkTrailSummary");
+    const graphWalkZoomOutBtnEl = document.getElementById("graphWalkZoomOutBtn");
+    const graphWalkZoomResetBtnEl = document.getElementById("graphWalkZoomResetBtn");
+    const graphWalkZoomInBtnEl = document.getElementById("graphWalkZoomInBtn");
+    const graphWalkSyncToFocusBtnEl = document.getElementById("graphWalkSyncToFocusBtn");
+    const graphWalkClearTrailBtnEl = document.getElementById("graphWalkClearTrailBtn");
     const filterBarPanelEl = document.getElementById("filterBarPanel");
     const entitySearchControlBlockEl = document.getElementById("entitySearchControlBlock");
     const topSearchPreviewEl = document.getElementById("topSearchPreview");
@@ -2029,6 +2351,24 @@
     let focusSnapshotMeetingPreviewCollapsed = false;
     let topExplorerCompact = false;
     let recentFocusHistory = [];
+    let activeMainView = "workbench";
+    let graphWalkFocusEntity = null;
+    let graphWalkTrail = [];
+    let graphWalkExpandedNodeIds = new Set();
+    let graphWalkNodeMap = new Map();
+    let graphWalkEdges = [];
+    let graphWalkLoading = false;
+    let graphWalkPreserveTrailOnNextFocusSync = false;
+    let graphWalkD3State = {
+      ready: false,
+      zoomBehavior: null,
+      svg: null,
+      root: null,
+      edgeLayer: null,
+      edgeLabelLayer: null,
+      nodeLayer: null,
+      currentTransform: null,
+    };
     const globalFilters = {
       topic: "",
       entityQuery: "",
@@ -2060,6 +2400,790 @@
       if (selectedMeetingContext?.meetingId) return `meeting:${Number(selectedMeetingContext.meetingId)}`;
       if (selectedEntityContext?.entityId) return `entity:${Number(selectedEntityContext.entityId)}`;
       return "";
+    }
+
+    function setMainViewMode(view) {
+      activeMainView = view === "graph" ? "graph" : "workbench";
+      if (workbenchViewBtnEl instanceof HTMLElement) {
+        workbenchViewBtnEl.classList.toggle("active", activeMainView === "workbench");
+        workbenchViewBtnEl.setAttribute("aria-pressed", String(activeMainView === "workbench"));
+      }
+      if (graphWalkViewBtnEl instanceof HTMLElement) {
+        graphWalkViewBtnEl.classList.toggle("active", activeMainView === "graph");
+        graphWalkViewBtnEl.setAttribute("aria-pressed", String(activeMainView === "graph"));
+      }
+      const workspaceEl = document.querySelector(".workspace");
+      if (workspaceEl instanceof HTMLElement) workspaceEl.hidden = activeMainView !== "workbench";
+      if (graphWalkViewPanelEl instanceof HTMLElement) graphWalkViewPanelEl.hidden = activeMainView !== "graph";
+      if (activeMainView === "graph") {
+        void syncGraphWalkFromCurrentFocus({ forceReset: graphWalkTrail.length === 0 });
+      }
+      syncWorkspaceHeight();
+    }
+
+    function clearGraphWalkState() {
+      graphWalkFocusEntity = null;
+      graphWalkTrail = [];
+      graphWalkExpandedNodeIds = new Set();
+      graphWalkNodeMap = new Map();
+      graphWalkEdges = [];
+      graphWalkPreserveTrailOnNextFocusSync = false;
+      renderGraphWalk();
+    }
+
+    function currentGraphFocusSourceNode() {
+      if (lastConnectionFocus && lastConnectionFocus.entityId) {
+        return {
+          entityId: Number(lastConnectionFocus.entityId),
+          label: String(lastConnectionFocus.label || `Entity ${lastConnectionFocus.entityId}`),
+          entityType: String(lastConnectionFocus.entityType || "").trim(),
+          bindings: Array.isArray(lastConnectionFocus.bindings) ? lastConnectionFocus.bindings : [],
+          kindMetadata: (lastConnectionFocus.kindMetadata && typeof lastConnectionFocus.kindMetadata === "object")
+            ? lastConnectionFocus.kindMetadata
+            : {},
+        };
+      }
+      if (selectedEntityContext && selectedEntityContext.entityId) {
+        return {
+          entityId: Number(selectedEntityContext.entityId),
+          label: String(selectedEntityContext.label || `Entity ${selectedEntityContext.entityId}`),
+          entityType: String(selectedEntityContext.entityType || "").trim(),
+          bindings: Array.isArray(selectedEntityContext.bindings) ? selectedEntityContext.bindings : [],
+          kindMetadata: (selectedEntityContext.kindMetadata && typeof selectedEntityContext.kindMetadata === "object")
+            ? selectedEntityContext.kindMetadata
+            : {},
+        };
+      }
+      return null;
+    }
+
+    function graphWalkNodeKey(entityId) {
+      return `n:${Number(entityId)}`;
+    }
+
+    function graphWalkEdgeKey(fromEntityId, toEntityId, relationType) {
+      return `${Number(fromEntityId)}>${Number(toEntityId)}:${String(relationType || "")}`;
+    }
+
+    function graphWalkStoreNode(node) {
+      const entityId = Number(node?.entityId || 0);
+      if (!Number.isFinite(entityId) || entityId <= 0) return null;
+      const existing = graphWalkNodeMap.get(entityId) || {};
+      const nextLoadedNeighborCountRaw = (node && Object.prototype.hasOwnProperty.call(node, "loadedNeighborCount"))
+        ? Number(node.loadedNeighborCount)
+        : Number(existing.loadedNeighborCount);
+      const next = {
+        entityId,
+        label: String(node?.label || existing.label || `Entity ${entityId}`),
+        entityType: String(node?.entityType || existing.entityType || "").trim(),
+        normalized: String(node?.normalized || existing.normalized || "").trim(),
+        bindings: Array.isArray(node?.bindings) ? node.bindings : (Array.isArray(existing.bindings) ? existing.bindings : []),
+        kindMetadata: (node?.kindMetadata && typeof node.kindMetadata === "object")
+          ? node.kindMetadata
+          : ((existing.kindMetadata && typeof existing.kindMetadata === "object") ? existing.kindMetadata : {}),
+        loadedNeighborCount: Number.isFinite(nextLoadedNeighborCountRaw) && nextLoadedNeighborCountRaw >= 0
+          ? nextLoadedNeighborCountRaw
+          : 0,
+      };
+      graphWalkNodeMap.set(entityId, next);
+      return next;
+    }
+
+    function graphWalkNodeFromConnectionRow(row) {
+      return graphWalkStoreNode({
+        entityId: Number(row.entity_id),
+        label: row.display_value || `Entity ${row.entity_id}`,
+        entityType: row.entity_type || "",
+        normalized: row.normalized_value || "",
+        bindings: row.bindings || [],
+        kindMetadata: row.kind_metadata || {},
+      });
+    }
+
+    async function fetchEntityConnectionsForGraph(entityId, limit = 25) {
+      const res = await fetch(`/entities/${entityId}/connections?limit=${Number(limit || 25)}`);
+      if (!res.ok) throw new Error(`Graph connections failed (${res.status})`);
+      return await res.json();
+    }
+
+    function graphWalkUpsertEdgesFromRows(sourceNode, rows) {
+      const sourceId = Number(sourceNode?.entityId || 0);
+      if (!Number.isFinite(sourceId) || sourceId <= 0) return;
+      const edgeMap = new Map(graphWalkEdges.map((e) => [graphWalkEdgeKey(e.fromEntityId, e.toEntityId, e.relationType), e]));
+      for (const row of rows || []) {
+        const otherId = Number(row.entity_id || 0);
+        if (!Number.isFinite(otherId) || otherId <= 0) continue;
+        const direction = String(row.direction || "outgoing");
+        const relationType = String(row.relation_type || "");
+        const fromEntityId = direction === "outgoing" ? sourceId : otherId;
+        const toEntityId = direction === "outgoing" ? otherId : sourceId;
+        const key = graphWalkEdgeKey(fromEntityId, toEntityId, relationType);
+        const next = {
+          fromEntityId,
+          toEntityId,
+          relationType,
+          directionFromSource: direction,
+          sourceEntityId: sourceId,
+          edgeCount: Number(row.edge_count || 0),
+          evidenceCount: Number(row.evidence_count || 0),
+          sharedMeetingCount: Number(row.shared_meeting_count || 0),
+        };
+        edgeMap.set(key, next);
+      }
+      graphWalkEdges = Array.from(edgeMap.values());
+    }
+
+    function graphWalkEnsureTrail(entityNode, { resetTrail = false } = {}) {
+      if (!entityNode || !entityNode.entityId) return;
+      const entityId = Number(entityNode.entityId);
+      if (resetTrail || !graphWalkTrail.length) {
+        graphWalkTrail = [entityId];
+        return;
+      }
+      if (Number(graphWalkTrail[graphWalkTrail.length - 1]) === entityId) return;
+      const existingIdx = graphWalkTrail.findIndex((id) => Number(id) === entityId);
+      if (existingIdx >= 0) {
+        graphWalkTrail = graphWalkTrail.slice(0, existingIdx + 1);
+        return;
+      }
+      graphWalkTrail = [...graphWalkTrail, entityId].slice(-12);
+    }
+
+    async function graphWalkExpandNodeNeighborhood(entityNode, { resetTrail = false } = {}) {
+      const storedNode = graphWalkStoreNode(entityNode);
+      if (!storedNode) return;
+      graphWalkFocusEntity = storedNode;
+      graphWalkEnsureTrail(storedNode, { resetTrail });
+      graphWalkLoading = true;
+      renderGraphWalk();
+      try {
+        const rows = await fetchEntityConnectionsForGraph(storedNode.entityId, 24);
+        storedNode.loadedNeighborCount = Array.isArray(rows) ? rows.length : 0;
+        for (const row of rows) graphWalkNodeFromConnectionRow(row);
+        graphWalkUpsertEdgesFromRows(storedNode, rows);
+        graphWalkExpandedNodeIds.add(Number(storedNode.entityId));
+      } catch (err) {
+        if (graphWalkNodeDetailsEl instanceof HTMLElement) {
+          graphWalkNodeDetailsEl.innerHTML = `<div class="meta">${escapeHtml(err.message || "Unable to load graph neighborhood.")}</div>`;
+        }
+      } finally {
+        graphWalkLoading = false;
+        renderGraphWalk();
+      }
+    }
+
+    function graphWalkCurrentSelectedEdgeKey() {
+      if (!selectedConnectionContext || !lastConnectionFocus?.entityId || !selectedConnectionContext.toEntityId) return "";
+      const fromEntityId = selectedConnectionContext.direction === "outgoing"
+        ? Number(lastConnectionFocus.entityId)
+        : Number(selectedConnectionContext.toEntityId);
+      const toEntityId = selectedConnectionContext.direction === "outgoing"
+        ? Number(selectedConnectionContext.toEntityId)
+        : Number(lastConnectionFocus.entityId);
+      return graphWalkEdgeKey(fromEntityId, toEntityId, selectedConnectionContext.relationType || "");
+    }
+
+    function graphWalkKindLabel(entityType) {
+      const t = String(entityType || "").trim().toLowerCase();
+      if (!t) return "entity";
+      return t.replace(/_/g, " ");
+    }
+
+    function graphWalkShortLabel(label, maxLen = 24) {
+      const text = String(label || "").trim();
+      if (text.length <= maxLen) return text;
+      return `${text.slice(0, maxLen - 1)}…`;
+    }
+
+    function graphWalkNodeSummary(node) {
+      const bits = [];
+      const kindMeta = (node?.kindMetadata && typeof node.kindMetadata === "object") ? node.kindMetadata : {};
+      if (node?.entityType === "meeting") {
+        const name = String(kindMeta.name || "").trim();
+        const location = String(kindMeta.location || "").trim();
+        const time = String(kindMeta.time || "").trim();
+        if (name) bits.push(name);
+        if (location) bits.push(location);
+        if (time) bits.push(time);
+      } else if (node?.entityType === "address") {
+        if (kindMeta.city) bits.push(kindMeta.city);
+        if (kindMeta.state) bits.push(kindMeta.state);
+        if (kindMeta.zip_code) bits.push(kindMeta.zip_code);
+      } else if (node?.entityType === "date") {
+        if (kindMeta.normalized_date) bits.push(kindMeta.normalized_date);
+      } else {
+        if (kindMeta.primary_name) bits.push(kindMeta.primary_name);
+      }
+      return bits.filter(Boolean).join(" • ");
+    }
+
+    function graphWalkNeighborRowsForFocus() {
+      if (!graphWalkFocusEntity?.entityId) return [];
+      const focusId = Number(graphWalkFocusEntity.entityId);
+      const rows = [];
+      for (const edge of graphWalkEdges) {
+        if (Number(edge.fromEntityId) !== focusId && Number(edge.toEntityId) !== focusId) continue;
+        const outgoing = Number(edge.fromEntityId) === focusId;
+        const otherId = outgoing ? Number(edge.toEntityId) : Number(edge.fromEntityId);
+        const node = graphWalkNodeMap.get(otherId);
+        if (!node) continue;
+        const kindFilter = String(globalFilters.entityType || "").trim().toLowerCase();
+        if (kindFilter && String(node.entityType || "").trim().toLowerCase() !== kindFilter) continue;
+        rows.push({
+          entityId: otherId,
+          label: node.label,
+          entityType: node.entityType,
+          bindings: node.bindings || [],
+          kindMetadata: node.kindMetadata || {},
+          relationType: edge.relationType,
+          direction: outgoing ? "outgoing" : "incoming",
+          edgeCount: Number(edge.edgeCount || 0),
+          evidenceCount: Number(edge.evidenceCount || 0),
+          sharedMeetingCount: Number(edge.sharedMeetingCount || 0),
+        });
+      }
+      rows.sort((a, b) => (Number(b.evidenceCount || 0) - Number(a.evidenceCount || 0)) || String(a.label || "").localeCompare(String(b.label || "")));
+      return rows;
+    }
+
+    function graphWalkKnownNeighborCount(entityId) {
+      const id = Number(entityId || 0);
+      if (!Number.isFinite(id) || id <= 0) return 0;
+      const node = graphWalkNodeMap.get(id);
+      const explicit = Number(node?.loadedNeighborCount || 0);
+      if (Number.isFinite(explicit) && explicit > 0) return explicit;
+      let count = 0;
+      for (const edge of graphWalkEdges) {
+        if (Number(edge.fromEntityId) === id || Number(edge.toEntityId) === id) count += 1;
+      }
+      return count;
+    }
+
+    function graphWalkNodeRadius(entityId, focusId) {
+      const id = Number(entityId || 0);
+      const isFocus = Number(id) === Number(focusId || 0);
+      const degree = Math.max(0, graphWalkKnownNeighborCount(id));
+      const base = isFocus ? 24 : 16;
+      const maxExtra = isFocus ? 16 : 14;
+      const extra = Math.min(maxExtra, Math.sqrt(degree) * 2.6);
+      return Math.round((base + extra) * 10) / 10;
+    }
+
+    function graphWalkEdgeStrokeWidth(edge, selectedEdgeKey = "") {
+      if (!edge) return 1.5;
+      const key = edge.key || graphWalkEdgeKey(edge.fromEntityId, edge.toEntityId, edge.relationType);
+      const evidenceCount = Number(edge.evidenceCount || 0);
+      const edgeCount = Number(edge.edgeCount || 0);
+      const strength = Math.max(1, evidenceCount, edgeCount * 1.5);
+      let width = 1 + Math.min(7.5, Math.sqrt(strength) * 0.7);
+      if (selectedEdgeKey && key === selectedEdgeKey) width += 1.1;
+      return Math.round(width * 10) / 10;
+    }
+
+    async function graphWalkSelectConnectionForNode(entityId) {
+      const otherId = Number(entityId || 0);
+      const focusId = Number(graphWalkFocusEntity?.entityId || 0);
+      if (!Number.isFinite(otherId) || otherId <= 0) return false;
+      if (!Number.isFinite(focusId) || focusId <= 0) return false;
+      if (otherId === focusId) return false;
+      if (!lastConnectionFocus || Number(lastConnectionFocus.entityId || 0) !== focusId) return false;
+      const relationMatches = (lastEntityRelatedRows || []).filter((row) => Number(row.entity_id || 0) === otherId);
+      if (!relationMatches.length) return false;
+      relationMatches.sort((a, b) =>
+        (Number(b.evidence_count || 0) - Number(a.evidence_count || 0)) ||
+        (Number(b.edge_count || 0) - Number(a.edge_count || 0)) ||
+        String(a.relation_type || "").localeCompare(String(b.relation_type || ""))
+      );
+      const best = relationMatches[0];
+      await loadConnectionEvidence(otherId, String(best.relation_type || ""), String(best.direction || "outgoing"));
+      return true;
+    }
+
+    function graphWalkD3Available() {
+      return Boolean(window.d3 && graphWalkSvgEl instanceof SVGElement);
+    }
+
+    function setGraphWalkZoomResetPressedState() {
+      if (!(graphWalkZoomResetBtnEl instanceof HTMLElement)) return;
+      const t = graphWalkD3State.currentTransform;
+      const isReset = !t || (
+        Math.abs(Number(t.k || 1) - 1) < 0.001 &&
+        Math.abs(Number(t.x || 0)) < 0.5 &&
+        Math.abs(Number(t.y || 0)) < 0.5
+      );
+      graphWalkZoomResetBtnEl.setAttribute("aria-pressed", String(isReset));
+    }
+
+    function ensureGraphWalkD3Scene() {
+      if (!graphWalkD3Available()) return false;
+      if (graphWalkD3State.ready && graphWalkD3State.svg && graphWalkD3State.root) return true;
+      const d3 = window.d3;
+      const svg = d3.select(graphWalkSvgEl);
+      svg.selectAll("*").remove();
+      const root = svg.append("g").attr("class", "graph-walk-d3-root");
+      const edgeLayer = root.append("g").attr("class", "graph-walk-d3-edges");
+      const edgeLabelLayer = root.append("g").attr("class", "graph-walk-d3-edge-labels");
+      const nodeLayer = root.append("g").attr("class", "graph-walk-d3-nodes");
+      const zoomBehavior = d3.zoom()
+        .scaleExtent([0.35, 4.5])
+        .on("zoom", (event) => {
+          root.attr("transform", event.transform);
+          graphWalkD3State.currentTransform = event.transform;
+          setGraphWalkZoomResetPressedState();
+        });
+      svg.call(zoomBehavior);
+      svg.on("dblclick.zoom", null);
+      graphWalkD3State = {
+        ready: true,
+        zoomBehavior,
+        svg,
+        root,
+        edgeLayer,
+        edgeLabelLayer,
+        nodeLayer,
+        currentTransform: d3.zoomIdentity,
+      };
+      setGraphWalkZoomResetPressedState();
+      return true;
+    }
+
+    function graphWalkZoomBy(factor = 1) {
+      if (!graphWalkD3Available() || !ensureGraphWalkD3Scene()) return;
+      const d3 = window.d3;
+      const svg = graphWalkD3State.svg;
+      const width = graphWalkSvgEl.viewBox?.baseVal?.width || 1000;
+      const height = graphWalkSvgEl.viewBox?.baseVal?.height || 640;
+      svg.transition().duration(180).call(
+        graphWalkD3State.zoomBehavior.scaleBy,
+        Number(factor || 1),
+        [width / 2, height / 2]
+      );
+    }
+
+    function graphWalkResetZoom({ immediate = false } = {}) {
+      if (!graphWalkD3Available() || !ensureGraphWalkD3Scene()) return;
+      const d3 = window.d3;
+      const selection = immediate ? graphWalkD3State.svg : graphWalkD3State.svg.transition().duration(180);
+      selection.call(graphWalkD3State.zoomBehavior.transform, d3.zoomIdentity);
+    }
+
+    function renderGraphWalkWithD3(nodes, edges, { focusId, selectedEdgeKey }) {
+      if (!ensureGraphWalkD3Scene()) return false;
+      const d3 = window.d3;
+      const width = graphWalkSvgEl.viewBox?.baseVal?.width || 1000;
+      const height = graphWalkSvgEl.viewBox?.baseVal?.height || 640;
+      const nodesById = new Map(nodes.map((n) => [Number(n.id), n]));
+      const edgeData = (edges || []).map((edge) => {
+        const source = nodesById.get(Number(edge.fromEntityId));
+        const target = nodesById.get(Number(edge.toEntityId));
+        if (!source || !target) return null;
+        return {
+          ...edge,
+          key: graphWalkEdgeKey(edge.fromEntityId, edge.toEntityId, edge.relationType),
+          source,
+          target,
+        };
+      }).filter(Boolean);
+
+      const clampX = (x) => Math.max(52, Math.min(width - 52, Number(x || 0)));
+      const clampY = (y) => Math.max(52, Math.min(height - 52, Number(y || 0)));
+
+      const updateEdgeGeometry = () => {
+        graphWalkD3State.edgeLayer.selectAll("line.graph-edge")
+          .attr("x1", (d) => d.source.x)
+          .attr("y1", (d) => d.source.y)
+          .attr("x2", (d) => d.target.x)
+          .attr("y2", (d) => d.target.y)
+          .attr("stroke-width", (d) => graphWalkEdgeStrokeWidth(d, selectedEdgeKey))
+          .classed("selected", (d) => d.key === selectedEdgeKey);
+
+        graphWalkD3State.edgeLabelLayer.selectAll("text.graph-edge-label")
+          .attr("x", (d) => Math.round((d.source.x + d.target.x) / 2))
+          .attr("y", (d) => Math.round((d.source.y + d.target.y) / 2) - 4)
+          .text((d) => `${d.relationType} (${Number(d.evidenceCount || 0)})`);
+
+        graphWalkD3State.nodeLayer.selectAll("g.graph-node")
+          .attr("transform", (d) => `translate(${Math.round(d.x)},${Math.round(d.y)})`)
+          .classed("focus", (d) => Number(d.id) === Number(focusId))
+          .classed("trail", (d) => Array.isArray(graphWalkTrail) && graphWalkTrail.map(Number).includes(Number(d.id)))
+          .classed("selected-connection", (d) => Boolean(selectedConnectionContext && Number(selectedConnectionContext.toEntityId || 0) === Number(d.id)));
+      };
+
+      const dragBehavior = d3.drag()
+        .on("start", function() { d3.select(this).raise(); })
+        .on("drag", (event, d) => {
+          d.x = clampX(event.x);
+          d.y = clampY(event.y);
+          if (d.nodeRef && typeof d.nodeRef === "object") {
+            d.nodeRef.gx = d.x;
+            d.nodeRef.gy = d.y;
+          }
+          updateEdgeGeometry();
+        });
+
+      const edgeSel = graphWalkD3State.edgeLayer.selectAll("line.graph-edge")
+        .data(edgeData, (d) => d.key);
+      edgeSel.exit().remove();
+      edgeSel.enter()
+        .append("line")
+        .attr("class", "graph-edge");
+
+      const edgeLabelSel = graphWalkD3State.edgeLabelLayer.selectAll("text.graph-edge-label")
+        .data(edgeData, (d) => d.key);
+      edgeLabelSel.exit().remove();
+      edgeLabelSel.enter()
+        .append("text")
+        .attr("class", "graph-edge-label")
+        .attr("text-anchor", "middle");
+
+      const nodeSel = graphWalkD3State.nodeLayer.selectAll("g.graph-node")
+        .data(nodes, (d) => Number(d.id));
+      nodeSel.exit().remove();
+      const nodeEnter = nodeSel.enter()
+        .append("g")
+        .attr("class", "graph-node")
+        .attr("data-graph-node-id", (d) => Number(d.id))
+        .style("cursor", "pointer");
+      nodeEnter.append("circle");
+      nodeEnter.append("text")
+        .attr("class", "graph-node-label")
+        .attr("text-anchor", "middle")
+        .attr("y", -2);
+      nodeEnter.append("text")
+        .attr("class", "graph-node-sub")
+        .attr("text-anchor", "middle");
+
+      const nodeMerge = nodeEnter.merge(nodeSel);
+      nodeMerge.call(dragBehavior);
+      nodeMerge.on("click", async (event, d) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const entityId = Number(d?.id || 0);
+        if (Number.isFinite(entityId) && entityId > 0) {
+          const selectedAsConnection = await graphWalkSelectConnectionForNode(entityId);
+          if (!selectedAsConnection) {
+            void graphWalkFocusNodeById(entityId);
+          }
+        }
+      });
+      nodeMerge.select("circle")
+        .attr("r", (d) => graphWalkNodeRadius(d.id, focusId));
+      nodeMerge.select("text.graph-node-label")
+        .text((d) => graphWalkShortLabel(d.label, Number(d.id) === Number(focusId) ? 28 : 20));
+      nodeMerge.select("text.graph-node-sub")
+        .attr("y", (d) => graphWalkNodeRadius(d.id, focusId) + 14)
+        .text((d) => graphWalkKindLabel(d.entityType));
+
+      updateEdgeGeometry();
+      return true;
+    }
+
+    function renderGraphWalk() {
+      if (!(graphWalkViewPanelEl instanceof HTMLElement)) return;
+      const hasFocus = Boolean(graphWalkFocusEntity && graphWalkFocusEntity.entityId);
+      if (graphWalkEmptyEl instanceof HTMLElement) graphWalkEmptyEl.hidden = hasFocus;
+      if (graphWalkLayoutEl instanceof HTMLElement) graphWalkLayoutEl.hidden = !hasFocus;
+      if (!hasFocus) {
+        if (graphWalkBreadcrumbsEl instanceof HTMLElement) graphWalkBreadcrumbsEl.innerHTML = "";
+        if (graphWalkNeighborListEl instanceof HTMLElement) graphWalkNeighborListEl.innerHTML = "";
+        if (graphWalkTrailSummaryEl instanceof HTMLElement) graphWalkTrailSummaryEl.textContent = "Walk the graph by clicking a neighbor node.";
+        if (graphWalkSvgEl instanceof SVGElement) graphWalkSvgEl.innerHTML = "";
+        return;
+      }
+
+      const focusId = Number(graphWalkFocusEntity.entityId);
+      const selectedEdgeKey = graphWalkCurrentSelectedEdgeKey();
+      const trailIds = (graphWalkTrail.length ? graphWalkTrail : [focusId]).map(Number);
+      const nodeIdsToRender = new Set(trailIds);
+      for (const edge of graphWalkEdges) {
+        if (graphWalkExpandedNodeIds.has(Number(edge.fromEntityId)) || graphWalkExpandedNodeIds.has(Number(edge.toEntityId))) {
+          nodeIdsToRender.add(Number(edge.fromEntityId));
+          nodeIdsToRender.add(Number(edge.toEntityId));
+        }
+      }
+      if (!nodeIdsToRender.has(focusId)) nodeIdsToRender.add(focusId);
+      const kindFilter = String(globalFilters.entityType || "").trim().toLowerCase();
+      if (kindFilter) {
+        for (const id of Array.from(nodeIdsToRender)) {
+          if (Number(id) === focusId) continue; // keep the anchor focus visible
+          const node = graphWalkNodeMap.get(Number(id));
+          const entityType = String(node?.entityType || "").trim().toLowerCase();
+          if (entityType !== kindFilter) nodeIdsToRender.delete(Number(id));
+        }
+      }
+
+      const w = 1000;
+      const h = 640;
+      const positions = new Map();
+      const anchors = trailIds.filter((id) => nodeIdsToRender.has(id));
+      const anchorCount = anchors.length || 1;
+      const xMargin = 120;
+      const yCenter = Math.round(h * 0.52);
+      for (let i = 0; i < anchorCount; i++) {
+        const id = anchors[i] ?? focusId;
+        const x = anchorCount === 1
+          ? Math.round(w / 2)
+          : Math.round(xMargin + ((w - xMargin * 2) * i) / Math.max(1, anchorCount - 1));
+        positions.set(Number(id), { x, y: yCenter });
+      }
+      const placed = new Set(Array.from(positions.keys()));
+      for (const anchorId of anchors) {
+        const anchorPos = positions.get(Number(anchorId));
+        if (!anchorPos) continue;
+        const neighbors = graphWalkEdges
+          .filter((edge) => Number(edge.fromEntityId) === Number(anchorId) || Number(edge.toEntityId) === Number(anchorId))
+          .map((edge) => ({
+            edge,
+            otherId: Number(edge.fromEntityId) === Number(anchorId) ? Number(edge.toEntityId) : Number(edge.fromEntityId),
+          }))
+          .filter((row) => nodeIdsToRender.has(row.otherId))
+          .sort((a, b) => Number(b.edge.evidenceCount || 0) - Number(a.edge.evidenceCount || 0));
+        const unplaced = neighbors.filter((n) => !placed.has(n.otherId));
+        const nCount = unplaced.length;
+        const radius = 145;
+        for (let i = 0; i < nCount; i++) {
+          const angle = (-Math.PI / 2) + ((2 * Math.PI) * i / Math.max(1, nCount));
+          const x = Math.round(anchorPos.x + Math.cos(angle) * radius);
+          const y = Math.round(anchorPos.y + Math.sin(angle) * Math.min(170, radius));
+          positions.set(unplaced[i].otherId, {
+            x: Math.max(60, Math.min(w - 60, x)),
+            y: Math.max(60, Math.min(h - 60, y)),
+          });
+          placed.add(unplaced[i].otherId);
+        }
+      }
+      for (const id of Array.from(nodeIdsToRender)) {
+        if (positions.has(id)) continue;
+        positions.set(id, { x: Math.round(w / 2), y: Math.round(h * 0.2) });
+      }
+
+      for (const id of Array.from(nodeIdsToRender)) {
+        const node = graphWalkNodeMap.get(Number(id));
+        if (!node) continue;
+        if (Number.isFinite(Number(node.gx)) && Number.isFinite(Number(node.gy))) {
+          positions.set(Number(id), {
+            x: Math.max(60, Math.min(w - 60, Number(node.gx))),
+            y: Math.max(60, Math.min(h - 60, Number(node.gy))),
+          });
+        } else {
+          const p = positions.get(Number(id));
+          if (p) {
+            node.gx = p.x;
+            node.gy = p.y;
+          }
+        }
+      }
+
+      const renderNodes = Array.from(nodeIdsToRender).map((id) => {
+        const node = graphWalkNodeMap.get(Number(id));
+        const pos = positions.get(Number(id));
+        if (!node || !pos) return null;
+        return {
+          id: Number(id),
+          x: pos.x,
+          y: pos.y,
+          label: node.label,
+          entityType: node.entityType,
+          nodeRef: node,
+        };
+      }).filter(Boolean);
+
+      const edgesSvg = graphWalkEdges
+        .filter((e) => nodeIdsToRender.has(Number(e.fromEntityId)) && nodeIdsToRender.has(Number(e.toEntityId)))
+        .map((edge) => {
+          const p1 = positions.get(Number(edge.fromEntityId));
+          const p2 = positions.get(Number(edge.toEntityId));
+          if (!p1 || !p2) return "";
+          const key = graphWalkEdgeKey(edge.fromEntityId, edge.toEntityId, edge.relationType);
+          const selected = key === selectedEdgeKey;
+          const midX = Math.round((p1.x + p2.x) / 2);
+          const midY = Math.round((p1.y + p2.y) / 2);
+          const strokeWidth = graphWalkEdgeStrokeWidth({ ...edge, key }, selectedEdgeKey);
+          return `
+            <g>
+              <line class="graph-edge${selected ? " selected" : ""}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" style="stroke-width:${strokeWidth}px" />
+              <text class="graph-edge-label" x="${midX}" y="${midY - 4}" text-anchor="middle">${escapeHtml(`${edge.relationType} (${Number(edge.evidenceCount || 0)})`)}</text>
+            </g>
+          `;
+        }).join("");
+
+      const nodesSvg = Array.from(nodeIdsToRender).map((id) => {
+        const node = graphWalkNodeMap.get(Number(id));
+        const pos = positions.get(Number(id));
+        if (!node || !pos) return "";
+        const isFocus = Number(id) === focusId;
+        const inTrail = trailIds.includes(Number(id));
+        const isSelectedConnNode = Boolean(selectedConnectionContext && Number(selectedConnectionContext.toEntityId || 0) === Number(id));
+        const r = graphWalkNodeRadius(id, focusId);
+        const label = graphWalkShortLabel(node.label, isFocus ? 28 : 20);
+        const sub = graphWalkKindLabel(node.entityType);
+        return `
+          <g class="graph-node${isFocus ? " focus" : ""}${inTrail ? " trail" : ""}${isSelectedConnNode ? " selected-connection" : ""}" data-graph-node-id="${Number(id)}" transform="translate(${pos.x},${pos.y})">
+            <circle cx="0" cy="0" r="${r}"></circle>
+            <text x="0" y="-2" text-anchor="middle">${escapeHtml(label)}</text>
+            <text class="graph-node-sub" x="0" y="${r + 14}" text-anchor="middle">${escapeHtml(sub)}</text>
+          </g>
+        `;
+        }).join("");
+
+      const renderEdges = graphWalkEdges
+        .filter((e) => nodeIdsToRender.has(Number(e.fromEntityId)) && nodeIdsToRender.has(Number(e.toEntityId)))
+        .map((e) => ({
+          fromEntityId: Number(e.fromEntityId),
+          toEntityId: Number(e.toEntityId),
+          relationType: String(e.relationType || ""),
+          evidenceCount: Number(e.evidenceCount || 0),
+          edgeCount: Number(e.edgeCount || 0),
+        }));
+
+      if (graphWalkSvgEl instanceof SVGElement) {
+        const renderedByD3 = renderGraphWalkWithD3(renderNodes, renderEdges, { focusId, selectedEdgeKey });
+        if (!renderedByD3) {
+          graphWalkSvgEl.innerHTML = `${edgesSvg}${nodesSvg}`;
+        }
+      }
+
+      if (graphWalkBreadcrumbsEl instanceof HTMLElement) {
+        const crumbs = [];
+        for (let i = 0; i < trailIds.length; i++) {
+          const id = Number(trailIds[i]);
+          const node = graphWalkNodeMap.get(id);
+          if (!node) continue;
+          if (i > 0) crumbs.push(`<span class="graph-walk-crumb-arrow">→</span>`);
+          crumbs.push(`<button type="button" class="graph-walk-crumb${id === focusId ? " active" : ""}" data-graph-crumb-id="${id}">${escapeHtml(graphWalkShortLabel(node.label, 36))}</button>`);
+        }
+        graphWalkBreadcrumbsEl.innerHTML = crumbs.join("");
+      }
+
+      const focusNode = graphWalkNodeMap.get(focusId) || graphWalkFocusEntity;
+      if (graphWalkNodeDetailsEl instanceof HTMLElement) {
+        const meta = graphWalkNodeSummary(focusNode);
+        const bindings = Array.isArray(focusNode?.bindings) ? focusNode.bindings : [];
+        graphWalkNodeDetailsEl.innerHTML = `
+          <div class="entity-title">${escapeHtml(graphWalkKindLabel(focusNode?.entityType || ""))}</div>
+          <div class="entity-title" style="margin:0;color:#23312d;font-weight:700;font-size:.92rem;">${escapeHtml(focusNode?.label || "Focus")}</div>
+          ${meta ? `<div class="meta">${escapeHtml(meta)}</div>` : `<div class="meta">No additional metadata loaded.</div>`}
+          ${bindings.length ? `<div class="entity-list">${bindings.slice(0, 4).map((b) => `<span class="entity-chip">${escapeHtml(`${b.source_table}:${b.source_id}`)}</span>`).join("")}</div>` : ""}
+          <div class="meta">neighbors loaded: ${graphWalkNeighborRowsForFocus().length}${graphWalkLoading ? " • loading…" : ""}</div>
+        `;
+      }
+
+      const focusNeighborRows = graphWalkNeighborRowsForFocus();
+      if (graphWalkNeighborListEl instanceof HTMLElement) {
+        if (!focusNeighborRows.length) {
+          graphWalkNeighborListEl.innerHTML = `<div class="graph-walk-empty">${graphWalkLoading ? "Loading graph neighborhood..." : "No neighbors loaded for the current focus."}</div>`;
+        } else {
+          graphWalkNeighborListEl.innerHTML = focusNeighborRows.map((row) => {
+            const active = Boolean(
+              selectedConnectionContext &&
+              Number(selectedConnectionContext.toEntityId || 0) === Number(row.entityId) &&
+              String(selectedConnectionContext.relationType || "") === String(row.relationType || "") &&
+              String(selectedConnectionContext.direction || "") === String(row.direction || "")
+            );
+            const node = graphWalkNodeMap.get(Number(row.entityId)) || row;
+            const meta = graphWalkNodeSummary(node);
+            return `
+              <div class="graph-walk-row${active ? " active" : ""}">
+                <div class="graph-walk-row-head">
+                  <button type="button" class="graph-walk-row-title" data-graph-walk-node-id="${row.entityId}">${escapeHtml(row.label)}</button>
+                  <span class="entity-chip">${escapeHtml(graphWalkKindLabel(row.entityType))}</span>
+                </div>
+                <div class="graph-walk-row-meta">${escapeHtml(`${row.direction} • ${row.relationType} • evidence ${row.evidenceCount} • meetings ${row.sharedMeetingCount}`)}</div>
+                ${meta ? `<div class="graph-walk-row-meta">${escapeHtml(meta)}</div>` : ""}
+                <div class="graph-walk-row-actions">
+                  <button type="button" data-graph-walk-node-id="${row.entityId}">Walk</button>
+                  <button type="button"
+                    data-connection-evidence-entity-id="${row.entityId}"
+                    data-connection-relation-type="${escapeHtml(row.relationType)}"
+                    data-connection-direction="${escapeHtml(row.direction)}">View Evidence</button>
+                  <button type="button"
+                    data-entity-mentions-id="${row.entityId}"
+                    data-entity-mentions-preserve-focus="1"
+                    data-entity-mentions-label="${escapeHtml(row.label)}">View Mentions</button>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      if (graphWalkTrailSummaryEl instanceof HTMLElement) {
+        const labels = trailIds
+          .map((id) => graphWalkNodeMap.get(Number(id))?.label || `Entity ${id}`)
+          .map((label) => graphWalkShortLabel(label, 34));
+        graphWalkTrailSummaryEl.textContent = labels.length
+          ? `Trail: ${labels.join(" → ")}`
+          : "Walk the graph by clicking a neighbor node.";
+      }
+    }
+
+    async function syncGraphWalkFromCurrentFocus({ forceReset = false } = {}) {
+      if (activeMainView !== "graph") return;
+      const preserveTrailOnFocusChange = Boolean(graphWalkPreserveTrailOnNextFocusSync);
+      graphWalkPreserveTrailOnNextFocusSync = false;
+      const sourceNode = currentGraphFocusSourceNode();
+      if (!sourceNode) {
+        if (selectedMeetingContext?.meetingId && !lastConnectionFocus?.entityId) {
+          if (graphWalkEmptyEl instanceof HTMLElement) {
+            graphWalkEmptyEl.hidden = false;
+            graphWalkEmptyEl.textContent = `Resolving graph node for Meeting ${selectedMeetingContext.meetingId}...`;
+          }
+          void loadMeetingFocusConnections(selectedMeetingContext.meetingId);
+          renderGraphWalk();
+          return;
+        }
+        clearGraphWalkState();
+        return;
+      }
+      const sameFocus = Number(graphWalkFocusEntity?.entityId || 0) === Number(sourceNode.entityId || 0);
+      if (!forceReset && sameFocus && graphWalkExpandedNodeIds.has(Number(sourceNode.entityId || 0))) {
+        graphWalkFocusEntity = graphWalkStoreNode(sourceNode) || graphWalkFocusEntity;
+        renderGraphWalk();
+        return;
+      }
+      const shouldResetGraph = forceReset || (!sameFocus && !preserveTrailOnFocusChange);
+      const shouldResetTrail = forceReset || (!sameFocus && !preserveTrailOnFocusChange);
+      if (shouldResetGraph) {
+        graphWalkNodeMap = new Map();
+        graphWalkEdges = [];
+        graphWalkExpandedNodeIds = new Set();
+      }
+      await graphWalkExpandNodeNeighborhood(sourceNode, { resetTrail: shouldResetTrail });
+    }
+
+    async function graphWalkFocusNodeById(entityId) {
+      const id = Number(entityId || 0);
+      if (!Number.isFinite(id) || id <= 0) return;
+      const node = graphWalkNodeMap.get(id);
+      if (!node) return;
+      const label = String(node.label || `Entity ${id}`);
+      const entityType = String(node.entityType || "").trim().toLowerCase();
+      setSidebarView("search");
+      const meetingBinding = Array.isArray(node.bindings)
+        ? node.bindings.find((b) => String(b.source_table || "") === "meetings" && Number(b.source_id || 0) > 0)
+        : null;
+
+      if (entityType === "meeting" && meetingBinding) {
+        graphWalkPreserveTrailOnNextFocusSync = true;
+        await openStoredMeeting(Number(meetingBinding.source_id), {
+          name: String(node.kindMetadata?.name || ""),
+          location: String(node.kindMetadata?.location || ""),
+          time: String(node.kindMetadata?.time || ""),
+        }, { focusMeeting: true });
+        return;
+      }
+
+      entitySearchEl.value = label;
+      setGlobalEntityFilter(label);
+      setSelectedEntityContext({
+        entityId: id,
+        label,
+        entityType,
+        bindings: node.bindings || [],
+        kindMetadata: node.kindMetadata || {},
+      });
+      graphWalkPreserveTrailOnNextFocusSync = true;
+      await loadEntityConnections(id, label, entityType, node.bindings || [], node.kindMetadata || {});
     }
 
     function mountOperationsPanelInSidebar() {
@@ -2347,6 +3471,7 @@
       updateEntityTypeFilterButtons();
       renderGlobalFilterChips();
       updateResultsContextHeader();
+      renderGraphWalk();
     }
 
     function setGlobalMeetingFilter(meetingId) {
@@ -2462,6 +3587,7 @@
         entityMentionsResultsEl.innerHTML = "";
       }
       renderLeftEntityContext();
+      renderGraphWalk();
     }
 
     function renderTopSelectedConnectionCard() {
@@ -2708,6 +3834,7 @@
       clearSelectedMeetingDetailView();
       updateExplorationWorkspaceVisibility();
       updateResultsContextHeader();
+      if (activeMainView === "graph") clearGraphWalkState();
       syncWorkspaceHeight();
     }
 
@@ -2755,6 +3882,10 @@
       const changedFocus = focusKeyForMeeting(nextMeeting) !== focusKeyForMeeting(selectedMeetingContext);
       if (changedFocus) clearSelectedConnection({ preserveEvidencePanel: true });
       selectedMeetingContext = nextMeeting;
+      if (changedFocus && activeMainView === "graph") {
+        lastConnectionFocus = null;
+        renderGraphWalk();
+      }
       selectedEntityContext = { entityId: null, label: "", entityType: "", bindings: [], kindMetadata: {} };
       if (selectedMeetingContext && selectedMeetingContext.meetingId) {
         pushRecentFocus({
@@ -4086,10 +5217,14 @@
           setSelectedEntityContext({ entityId, label: entityLabel, entityType, bindings, kindMetadata });
         }
         renderEntityRelatedResults(rows, entityLabel);
+        const preserveTrailSync = activeMainView === "graph" && graphWalkPreserveTrailOnNextFocusSync;
+        void syncGraphWalkFromCurrentFocus({ forceReset: !preserveTrailSync });
       } catch (err) {
         entityRelatedResultsEl.innerHTML = `<div class="search-result">${err.message || "Connections lookup failed."}</div>`;
         lastEntityRelatedRows = [];
+        graphWalkPreserveTrailOnNextFocusSync = false;
         renderLeftEntityContext();
+        renderGraphWalk();
       }
     }
 
@@ -4107,8 +5242,10 @@
         if (!match) {
           lastConnectionFocus = null;
           lastEntityRelatedRows = [];
+          graphWalkPreserveTrailOnNextFocusSync = false;
           entityRelatedResultsEl.innerHTML = `<div class="search-result">No graph connections found for Meeting ${meetingNum}. Run graph backfill if this meeting predates graph entities.</div>`;
           renderLeftEntityContext();
+          renderGraphWalk();
           updateExplorationWorkspaceVisibility();
           syncWorkspaceHeight();
           return;
@@ -4117,8 +5254,10 @@
       } catch (err) {
         lastConnectionFocus = null;
         lastEntityRelatedRows = [];
+        graphWalkPreserveTrailOnNextFocusSync = false;
         entityRelatedResultsEl.innerHTML = `<div class="search-result">${err.message || "Meeting graph lookup failed."}</div>`;
         renderLeftEntityContext();
+        renderGraphWalk();
         updateExplorationWorkspaceVisibility();
         syncWorkspaceHeight();
       }
@@ -4156,6 +5295,7 @@
         };
         renderEntityRelatedResults(lastEntityRelatedRows || [], lastConnectionFocus.label);
         renderLeftEntityContext();
+        renderGraphWalk();
         const title = `Evidence: ${lastConnectionFocus.label} ${direction === "outgoing" ? "→" : "←"} ${relatedLabel} (${relationType})`;
         if (!rows.length) {
           entityMentionsResultsEl.innerHTML = `<div class="search-result"><div class="entity-title">${title}</div><div class="meta">No evidence rows found for this connection.</div></div>`;
@@ -4185,6 +5325,7 @@
         selectedConnectionContext = null;
         renderEntityRelatedResults(lastEntityRelatedRows || [], lastConnectionFocus?.label || "focus");
         renderLeftEntityContext();
+        renderGraphWalk();
         entityMentionsResultsEl.innerHTML = `<div class="search-result">${err.message || "Unable to load connection evidence."}</div>`;
         updateExplorationWorkspaceVisibility();
         focusEvidencePanel(mentionsSectionEl);
@@ -4215,14 +5356,19 @@
 
     function syncWorkspaceHeight() {
       const workspace = document.querySelector(".workspace");
-      if (!(workspace instanceof HTMLElement)) return;
+      const graphWalkPanel = graphWalkViewPanelEl instanceof HTMLElement ? graphWalkViewPanelEl : null;
+      if (!(workspace instanceof HTMLElement) && !graphWalkPanel) return;
       if (window.innerWidth <= 900) {
-        workspace.style.height = "auto";
+        if (workspace instanceof HTMLElement) workspace.style.height = "auto";
+        if (graphWalkPanel) graphWalkPanel.style.height = "auto";
         return;
       }
-      const top = workspace.getBoundingClientRect().top;
+      const topAnchor = (activeMainView === "graph" && graphWalkPanel) ? graphWalkPanel : workspace;
+      if (!(topAnchor instanceof HTMLElement)) return;
+      const top = topAnchor.getBoundingClientRect().top;
       const height = Math.max(360, Math.floor(window.innerHeight - top - 12));
-      workspace.style.height = `${height}px`;
+      if (workspace instanceof HTMLElement) workspace.style.height = `${height}px`;
+      if (graphWalkPanel) graphWalkPanel.style.height = `${height}px`;
     }
 
     async function searchEntities(options = {}) {
@@ -4482,6 +5628,37 @@
       });
       setTopExplorerCompact(false);
     }
+    if (workbenchViewBtnEl instanceof HTMLElement) {
+      workbenchViewBtnEl.addEventListener("click", () => setMainViewMode("workbench"));
+    }
+    if (graphWalkViewBtnEl instanceof HTMLElement) {
+      graphWalkViewBtnEl.addEventListener("click", () => setMainViewMode("graph"));
+    }
+    if (graphWalkSyncToFocusBtnEl instanceof HTMLElement) {
+      graphWalkSyncToFocusBtnEl.addEventListener("click", () => {
+        graphWalkResetZoom();
+        void syncGraphWalkFromCurrentFocus({ forceReset: true });
+      });
+    }
+    if (graphWalkZoomOutBtnEl instanceof HTMLElement) {
+      graphWalkZoomOutBtnEl.addEventListener("click", () => graphWalkZoomBy(0.82));
+    }
+    if (graphWalkZoomResetBtnEl instanceof HTMLElement) {
+      graphWalkZoomResetBtnEl.addEventListener("click", () => graphWalkResetZoom());
+    }
+    if (graphWalkZoomInBtnEl instanceof HTMLElement) {
+      graphWalkZoomInBtnEl.addEventListener("click", () => graphWalkZoomBy(1.22));
+    }
+    if (graphWalkClearTrailBtnEl instanceof HTMLElement) {
+      graphWalkClearTrailBtnEl.addEventListener("click", () => {
+        if (graphWalkFocusEntity) {
+          graphWalkTrail = [Number(graphWalkFocusEntity.entityId)];
+          renderGraphWalk();
+        } else {
+          clearGraphWalkState();
+        }
+      });
+    }
     loadRuntimeDiagnostics();
     loadStartupExplore();
     loadCoverageSummary();
@@ -4502,6 +5679,7 @@
     updateDiscoveryStartsVisibility();
     setSidebarView("search");
     mountOperationsPanelInSidebar();
+    setMainViewMode("workbench");
     syncWorkspaceHeight();
     window.addEventListener("load", syncWorkspaceHeight);
     if (document.fonts && document.fonts.ready) {
@@ -4548,6 +5726,43 @@
       if (sectionEl.classList.contains("evidence-flat")) return;
       sectionEl.classList.toggle("collapsed");
       syncWorkspaceHeight();
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const graphNode = target.closest("[data-graph-node-id]");
+      if (graphNode instanceof HTMLElement) {
+        event.preventDefault();
+        const entityId = Number(graphNode.dataset.graphNodeId || 0);
+        if (Number.isFinite(entityId) && entityId > 0) {
+          void (async () => {
+            const selectedAsConnection = await graphWalkSelectConnectionForNode(entityId);
+            if (!selectedAsConnection) {
+              await graphWalkFocusNodeById(entityId);
+            }
+          })();
+        }
+        return;
+      }
+      const crumb = target.closest("[data-graph-crumb-id]");
+      if (crumb instanceof HTMLElement) {
+        event.preventDefault();
+        const entityId = Number(crumb.dataset.graphCrumbId || 0);
+        if (Number.isFinite(entityId) && entityId > 0) {
+          void graphWalkFocusNodeById(entityId);
+        }
+        return;
+      }
+      const walkBtn = target.closest("[data-graph-walk-node-id]");
+      if (walkBtn instanceof HTMLElement) {
+        event.preventDefault();
+        const entityId = Number(walkBtn.dataset.graphWalkNodeId || 0);
+        if (Number.isFinite(entityId) && entityId > 0) {
+          void graphWalkFocusNodeById(entityId);
+        }
+        return;
+      }
     });
 
     document.addEventListener("click", (event) => {
